@@ -1,0 +1,40 @@
+version: '3.9'
+services:
+  mongo:
+    image: mongo:6
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+  backend:
+    build: ./backend
+    environment:
+      - PORT=4000
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongo:27017/rapid_astrology
+      - JWT_SECRET=dev_change_me
+      - OTP_EXPIRY_MINUTES=5
+      - PAYU_MERCHANT_KEY=your_payu_key
+      - PAYU_MERCHANT_SALT=your_payu_salt
+      - PAYU_BASE_URL=https://test.payu.in
+      - FRONTEND_URL=http://localhost:5173
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - '4000:4000'
+    depends_on:
+      - mongo
+      - redis
+  frontend:
+    build: ./frontend
+    ports:
+      - '5173:80'
+    depends_on:
+      - backend
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+volumes:
+  mongo_data:
