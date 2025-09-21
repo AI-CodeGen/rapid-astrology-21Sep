@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --spot-x: 50%;
+  --spot-y: 50%;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  @apply antialiased bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-800 text-slate-100 relative overflow-x-hidden;
+}
+
+.light body, body.theme-day {
+  @apply bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-800;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { @apply bg-transparent; }
+::-webkit-scrollbar-thumb { @apply bg-slate-700/50 rounded-full border border-slate-600/40; }
+::-webkit-scrollbar-thumb:hover { @apply bg-slate-600/70; }
+
+/* Glass panel utility */
+.glass {
+  @apply bg-white/10 dark:bg-slate-800/40 backdrop-blur-md border border-white/10 dark:border-slate-700/60 shadow-lg shadow-black/40;
+}
+
+.spotlight-overlay::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--spot-x) var(--spot-y), rgba(255,255,255,0.18), transparent 60%);
+  mix-blend-mode: overlay;
+  transition: 300ms;
+}
+
+/* Typography tweaks */
+.h1-gradient {
+  @apply text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-pink-300 dark:from-indigo-200 dark:via-fuchsia-300 dark:to-pink-400 text-transparent bg-clip-text;
+}
+
+.btn-primary { @apply inline-flex items-center gap-2 rounded-md bg-brand-600 hover:bg-brand-500 active:bg-brand-700 text-white px-4 py-2 text-sm font-medium shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 transition; }
+.btn-ghost { @apply inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-slate-100 hover:bg-white/15 active:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 transition; }
+
+.card { @apply glass rounded-xl p-6 animate-scale-in; }
+
+.fade-in { @apply animate-fade-in; }
+.scale-in { @apply animate-scale-in; }

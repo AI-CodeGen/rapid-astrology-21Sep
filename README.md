@@ -56,6 +56,259 @@ npm install
 npm run dev
 ```
 
+## Running the Application (Local Dev Without Docker)
+This setup runs each service directly on your host machine (ideal for fast iteration with hot reload).
+
+### 1. Prerequisites
+- Node.js 18+ (LTS recommended)
+- npm 9+ (comes with Node)
+- Local MongoDB (optional if you use a remote cluster) – default port 27017
+- (Optional) Local Redis for caching (recommended). If absent, numerology caching will fail to init gracefully; you can point `REDIS_URL` to a running instance.
+
+### 2. Backend Environment File
+Create `backend/.env` (copy from `backend/ENV_EXAMPLE` if present or compose the following):
+```
+PORT=4000
+MONGO_URI=mongodb://localhost:27017/rapid_astrology
+JWT_SECRET=dev_change_me
+OTP_EXPIRY_MINUTES=5
+PAYU_MERCHANT_KEY=your_payu_key
+PAYU_MERCHANT_SALT=your_payu_salt
+PAYU_BASE_URL=https://test.payu.in
+FRONTEND_URL=http://localhost:5173
+REDIS_URL=redis://localhost:6379
+REPORT_ENCRYPTION_KEY=dev_report_key_32chars
+BACKEND_PUBLIC_URL=http://localhost:4000
+CACHE_TTL_SECONDS=3600
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CALLBACK_URL=http://localhost:4000/api/auth/google/callback
+```
+
+If you don't have Redis locally you can comment out `REDIS_URL` (the app will log connection failure; numerology caching will be disabled). For production parity it’s better to run Redis.
+
+### 3. Frontend Environment File
+Create `frontend/.env` (optional for default behavior):
+```
+VITE_GOOGLE_OAUTH_ENABLED=true
+VITE_BACKEND_BASE=http://localhost:4000
+```
+Currently `api.js` uses a relative baseURL (`/api`). During dev Vite proxy can be added if needed; with the backend on port 4000 and frontend on 5173, your browser will hit `http://localhost:5173/api/*` and unless you configure a proxy you should change `api.js` to use `VITE_BACKEND_BASE` OR run a proxy. Simplest: adjust the axios instance:
+```js
+// (Optional improvement) baseURL: import.meta.env.VITE_BACKEND_BASE + '/api'
+```
+Otherwise add a proxy in `vite.config.js`:
+```js
+// server: { proxy: { '/api': 'http://localhost:4000' } }
+```
+
+### 4. Install & Run Backend
+```
+cd backend
+npm install
+npm run dev
+```
+The server starts on `http://localhost:4000` with Nodemon auto‑reload.
+
+### 5. Install & Run Frontend
+In a new terminal:
+```
+cd frontend
+npm install
+npm run dev
+```
+Open `http://localhost:5173`.
+
+### 6. Google OAuth Notes
+- Ensure `GOOGLE_CALLBACK_URL` matches the authorized redirect URI in your Google Cloud Console.
+- The backend redirects to `/login?token=...` or `/oauth/callback` depending on configuration.
+
+### 7. PayU Sandbox
+Use provided sandbox credentials; hash validation flow hinges on `PAYU_MERCHANT_SALT`.
+
+### 8. Testing Backend
+```
+cd backend
+npm test
+```
+Uses in-memory Mongo (no external DB required for tests) & skips Redis init.
+
+### 9. Common Local Troubleshooting
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| CORS errors | FRONTEND_URL mismatch | Match `FRONTEND_URL` exactly (including protocol & port). |
+| Mongo connect retry logs | Wrong `MONGO_URI` or Mongo not running | Start Mongo or correct URI. |
+| Redis init failed | Redis not running | Start Redis or remove `REDIS_URL` temporarily. |
+| OAuth redirect mismatch | Callback URL differs | Align Google console value & `.env`. |
+
+## Running the Application in Production (Docker)
+Use Docker Compose for a containerized stack including Mongo, Redis, backend, and an Nginx-served frontend build.
+
+### 1. Prepare Environment Overrides (Optional)
+You can edit `docker-compose.yml` environment block under `backend:` for secrets (recommend using an `.env` + variable interpolation in compose for real deployments). Minimum to review: `JWT_SECRET`, PayU keys, Google credentials, `BACKEND_PUBLIC_URL`.
+
+### 2. Build & Start
+```
+docker compose up --build -d
+```
+Services:
+- Frontend: http://localhost:5173 (served from built assets)
+- Backend:  http://localhost:4000
+- MongoDB:  localhost:27017
+- Redis:    localhost:6379
+
+### 3. Logs & Management
+```
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose ps
+docker compose down        # Stop & remove containers
+docker compose down -v     # Also remove volumes (including Mongo data!)
+```
+
+### 4. Rebuilding After Code Changes
+For backend tweaks:
+```
+docker compose build backend && docker compose up -d backend
+```
+For frontend UI changes:
+```
+docker compose build frontend && docker compose up -d frontend
+```
+Or rebuild everything: `docker compose up --build -d`.
+
+### 5. Adding HTTPS / Reverse Proxy
+For production you’d normally place Traefik, Caddy, or Nginx with TLS termination in front. Adjust CORS `FRONTEND_URL` & `BACKEND_PUBLIC_URL` to your domain.
+
+### 6. Data Persistence
+`mongo_data` named volume keeps Mongo between restarts. Use `docker compose down -v` cautiously.
+
+### 7. Environment Variable Summary (Backend)
+| Variable | Purpose | Dev Default |
+|----------|---------|-------------|
+| PORT | Backend port | 4000 |
+| MONGO_URI | Mongo connection | mongodb://mongo:27017/... (docker) / localhost (dev) |
+| JWT_SECRET | Sign JWTs | change_me |
+| OTP_EXPIRY_MINUTES | OTP validity minutes | 5 |
+| PAYU_MERCHANT_KEY/SALT/BASE_URL | PayU sandbox credentials | test values |
+| FRONTEND_URL | Allowed CORS origins (comma separated) | http://localhost:5173 |
+| REDIS_URL | Redis connection string | redis://redis:6379 (docker) |
+| REPORT_ENCRYPTION_KEY | Placeholder secret for report encryption | dev_report_key_32chars |
+| CACHE_TTL_SECONDS | Numerology caching TTL | 3600 |
+| BACKEND_PUBLIC_URL | External base URL (callbacks) | http://localhost:4000 |
+| GOOGLE_CLIENT_ID/SECRET/CALLBACK_URL | OAuth credentials | none |
+
+### 8. Health Check
+`GET /health` returns JSON `{ status, time }`. Useful for container readiness probes.
+
+### 9. Zero-Downtime Strategy (Future)
+- Build images & push to registry.
+- Deploy via rolling updates on your orchestrator (Kubernetes/Swarm) with readiness using `/health`.
+
+---
+
+
+## UI Modernization (Tailwind CSS)
+
+The frontend has been upgraded with Tailwind CSS for a modern, utility‑first styling approach including a subtle spotlight background, glassmorphism surfaces, and dark mode.
+
+### Added Dependencies
+Dev dependencies in `frontend/`:
+- tailwindcss
+- postcss / autoprefixer
+- @tailwindcss/forms @tailwindcss/typography @tailwindcss/container-queries
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `frontend/tailwind.config.js` | Tailwind configuration, dark mode via `class`, custom brand palette, animations. |
+| `frontend/postcss.config.js` | PostCSS pipeline enabling Tailwind + Autoprefixer. |
+| `frontend/src/index.css` | Tailwind directives + custom utilities (glass panels, spotlight overlay, buttons). |
+| `frontend/src/context/ThemeContext.jsx` | Toggles `dark` class on `<html>` for dark mode. |
+| `frontend/src/components/*` | Refactored with Tailwind utilities for layout and interaction. |
+
+### Running with Tailwind
+Just use existing scripts:
+```
+cd frontend
+npm run dev
+```
+Vite processes Tailwind through PostCSS automatically.
+
+### Dark Mode
+Theme toggle switches between `day` and `night` which adds/removes the `dark` class on `<html>`. Tailwind's `dark:` variants now apply.
+
+### Utility Classes Introduced
+- `glass` – translucent blurred surface.
+- `btn-primary`, `btn-ghost` – button variants.
+- `h1-gradient` – gradient heading text.
+- Animations: `animate-fade-in`, `animate-scale-in` via config.
+
+### Spotlight Effect
+`spotlight-overlay` wrapper (applied at `App` root) draws a subtle radial highlight using CSS custom properties `--spot-x` & `--spot-y` (can be wired to mousemove later for interactive glow).
+
+### Extending the Theme
+Edit `tailwind.config.js` to add colors or animations. Trigger IntelliSense by referencing classes in JSX; purge (content scanning) is already configured for `./src/**/*.{js,jsx,ts,tsx}` and `index.html`.
+
+### Adding Components
+Prefer composing primitives using Tailwind utilities. For repeated patterns (cards, badges, alerts) add small component wrappers or utility classes in `index.css`.
+
+### Future Enhancements
+- Extract a `<SpotlightProvider>` to animate spotlight with cursor position.
+- Create a `<Container>` layout component for consistent max-width handling.
+- Add motion-safe / motion-reduce variants to animations for accessibility.
+- Introduce a design tokens file (CSS variables) for brand gradients.
+
+### Design Philosophy
+Emphasis on:
+1. Clear visual hierarchy (gradient headings, subdued body text).
+2. Low-contrast dark background with luminous brand accents.
+3. Accessible focus states (`focus-visible` rings using brand color).
+4. Minimal custom CSS—utilities over bespoke styles for speed and consistency.
+
+### Mobile Navigation
+Implemented a portal-based `<MobileMenu />`:
+- Opens via hamburger button on screens `< md`.
+- Focus trap & ESC to close; background scroll locked while open.
+- Shares navigation data (`navigationData.js`) with desktop discipline menu to avoid duplication.
+- Auth actions (Login / Logout) included at bottom section.
+
+To modify navigation groups edit: `frontend/src/components/navigationData.js`.
+
+### Interactive Spotlight & Layout
+- A `SpotlightTracker` component updates CSS custom properties `--spot-x` / `--spot-y` on pointer move (rAF throttled) producing a subtle moving radial highlight.
+- `Container` component standardizes horizontal padding & max-width usage across pages and header.
+
+### Icons
+Replaced emoji UI icons with `lucide-react` (open-source SVG icon set). Example usage:
+```
+import { Sun, Moon } from 'lucide-react';
+```
+Theme toggle now cross-fades Sun/Moon with scaling/rotation transitions.
+
+### Accessibility Enhancements
+- Added a skip link (visible on focus) for keyboard users: jumps directly to main content.
+- Ensured `role="main"` on the primary `<main>` element.
+- Focus outlines use brand color with sufficient contrast.
+
+### Tailwind Version Note
+The project reverted to stable Tailwind CSS v3.x for predictable utility availability after experimenting with the `@tailwindcss/postcss` (v4 preview) plugin which produced unknown utility warnings (e.g. gradient `from-*` classes). The current stack uses:
+```
+"tailwindcss": "^3.4.x",
+"postcss": "^8.4.x",
+"autoprefixer": "^10.4.x"
+```
+If upgrading to Tailwind v4 later, remove the v3 config nuance and follow the official migration guide (re‑enable color utilities or adapt gradient syntax accordingly).
+- Mobile menu implements focus trapping, ESC close, inert background scroll lock, and slide transition for motion clarity.
+- Improved button contrast (`btn-ghost`).
+
+### Future A11y Ideas
+- Add `prefers-reduced-motion` handling to disable spotlight animation & transitions for users requesting reduced motion.
+- Add ARIA live region for async operations (e.g. loading predictions or payments).
+- Implement color contrast automated test (axe / jest-axe) in CI.
+
+
+
 ### Login Methods
 The login page now offers:
 1. Google OAuth ("Continue with Google" button) – toggled via `VITE_GOOGLE_OAUTH_ENABLED` (default shown). Backend completes OAuth and redirects back to `/login?token=...` where the token is captured and the profile fetched automatically.
