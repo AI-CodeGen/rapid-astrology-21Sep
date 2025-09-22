@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getPaymentStatus } from '../services/paymentService';
 import { useAuth } from '../context/AuthContext.jsx';
+import Box from '../components/ui/Box.jsx';
+import Card from '../components/ui/Card.jsx';
 
 export default function PaymentFailure() {
   const [params] = useSearchParams();
@@ -17,12 +19,15 @@ export default function PaymentFailure() {
   }, [token, txnid]);
 
   return (
-    <div>
-      <h2>Payment Failed</h2>
-      <p>Transaction ID: {txnid}</p>
-      {payment && <pre style={{background:'#f7f7f7', padding:'1rem'}}>{JSON.stringify(payment, null, 2)}</pre>}
-      {error && <p style={{color:'red'}}>{error}</p>}
-      <p>Please try again or contact support.</p>
-    </div>
+    <Box>
+      <div className="max-w-2xl space-y-6">
+        <Card title="Payment Failed">
+          <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">Transaction ID: {txnid}</p>
+          {payment && <pre className="rounded-md bg-slate-900 text-brand-400 text-xs p-3 max-h-72 overflow-auto">{JSON.stringify(payment, null, 2)}</pre>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400 mt-2">{error}</p>}
+          <p className="text-sm text-slate-600 dark:text-slate-300 mt-4">Please try again or contact support.</p>
+        </Card>
+      </div>
+    </Box>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Header from './components/Header';
+import HeaderBar from './components/ui/HeaderBar.jsx';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
@@ -41,7 +41,7 @@ export default function App() {
     <div className={`min-h-screen font-sans spotlight-overlay selection:bg-brand-500/40 selection:text-white`}> 
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:rounded-md focus:bg-brand-600 focus:text-white focus:shadow-lg">Skip to content</a>
       <SpotlightTracker />
-      <Header />
+      <HeaderBar />
       <main id="main" className="relative py-6" role="main">
         <Container>
         <Routes>

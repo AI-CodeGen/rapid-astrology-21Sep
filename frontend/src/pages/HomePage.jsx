@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Box from '../components/ui/Box.jsx';
 
 export default function HomePage() {
   return (
+    <Box>
     <div className="relative">
       <div className="max-w-3xl space-y-6 sm:space-y-7">
         <h1 className="h1-gradient text-3xl sm:text-4xl lg:text-5xl leading-tight">Navigate Your Cosmic & Numerological Insights</h1>
@@ -23,6 +25,7 @@ export default function HomePage() {
         <FeatureCard title="Extensible" desc="Architecture ready to plug in more astrology modules soon." />
       </div>
     </div>
+    </Box>
   );
 }
 

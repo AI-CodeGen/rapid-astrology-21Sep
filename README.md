@@ -307,6 +307,45 @@ If upgrading to Tailwind v4 later, remove the v3 config nuance and follow the of
 - Add ARIA live region for async operations (e.g. loading predictions or payments).
 - Implement color contrast automated test (axe / jest-axe) in CI.
 
+### Design System Additions (Box, Card, HeaderBar, Input)
+To standardize layout and visual rhythm a lightweight design system layer was introduced:
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `Box` | `src/components/ui/Box.jsx` | Page-level wrapper providing vertical spacing beneath fixed header & centered max width. |
+| `Card` | `src/components/ui/Card.jsx` | Glass / elevated surface with unified padding, border, subtle shadow and optional `title` + `actions`. |
+| `Input` / `Textarea` | `src/components/ui/Input.jsx` | Consistent form field styling (rounded-lg, focus ring, dark mode). |
+| `HeaderBar` | `src/components/ui/HeaderBar.jsx` | Fixed top navigation (replaces earlier `Header`), shares navigation data via `navigationData.js`. |
+
+All existing pages (Login, Numerology calculators, Profile, Payments, OAuth callback, Home) now compose these primitives without renaming or removing any original form fields or buttons, ensuring functional parity with prior implementation.
+
+Example usage in a page:
+```jsx
+import Box from '../components/ui/Box.jsx';
+import Card from '../components/ui/Card.jsx';
+import { Input } from '../components/ui/Input.jsx';
+
+export default function ExamplePage(){
+  return (
+    <Box>
+      <div className="max-w-md mx-auto">
+        <Card title="Example" actions={<button className="btn-primary px-4 py-2 rounded-lg text-sm font-medium">Save</button>}>
+          <Input placeholder="Type..." />
+        </Card>
+      </div>
+    </Box>
+  );
+}
+```
+
+Benefits:
+1. Consistent spacing & readable hierarchy.
+2. Reduced inline style duplication (all legacy inline styles removed or migrated).
+3. Dark mode coherence across surfaces & inputs.
+4. Easier future extension (add variants in a single place).
+
+If you introduce new calculator pages, wrap them in `Box` -> inner width container -> `Card` for immediate visual consistency.
+
 
 
 ### Login Methods

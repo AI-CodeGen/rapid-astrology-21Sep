@@ -1,8 +1,15 @@
 import React from 'react';
+import Box from '../components/ui/Box.jsx';
+import Card from '../components/ui/Card.jsx';
 
 export default function PaymentPage() {
-  return <div>
-    <h2>Payment</h2>
-    <p>Initiate payments for reports here (placeholder).</p>
-  </div>;
+  return (
+    <Box>
+      <div className="max-w-xl">
+        <Card title="Payment">
+          <p className="text-sm text-slate-600 dark:text-slate-300">Initiate payments for reports here (placeholder).</p>
+        </Card>
+      </div>
+    </Box>
+  );
 }
