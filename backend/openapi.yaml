@@ -19,6 +19,46 @@ components:
           format: date-time
           deprecated: true
           description: Legacy alias for timestamp; will be removed in a future version.
+    TimeObject:
+      type: object
+      properties:
+        hour: { type: integer, minimum: 0, maximum: 23 }
+        minute: { type: integer, minimum: 0, maximum: 59 }
+        second: { type: integer, minimum: 0, maximum: 59 }
+      required: [hour, minute]
+    PlaceObject:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        district: { type: string }
+        state: { type: string }
+        country: { type: string }
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+      required: [name]
+    BasicDetails:
+      type: object
+      properties:
+        dob: { type: string, format: date }
+        time: { $ref: '#/components/schemas/TimeObject' }
+        timeString: { type: string, pattern: '^[0-2]\\d:[0-5]\\d:[0-5]\\d$' }
+        place: { $ref: '#/components/schemas/PlaceObject' }
+        placeString: { type: string }
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        phone: { type: string }
+        email: { type: string, nullable: true }
+        name: { type: string }
+        roles: { type: array, items: { type: string } }
+        settings:
+          type: object
+          properties:
+            theme: { type: string, enum: [day, night] }
+        lastLoginAt: { type: string, format: date-time, nullable: true }
+        userBasicDetails: { $ref: '#/components/schemas/BasicDetails' }
     ErrorDetail:
       type: object
       properties:
@@ -91,13 +131,38 @@ paths:
                 code: { type: string }
               required: [phone, code]
       responses:
-        '200': { description: Authenticated, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          token: { type: string }
+                          user: { $ref: '#/components/schemas/User' }
         '400': { description: Validation/auth error, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
   /api/auth/me:
     get:
       summary: Get current user profile
       responses:
-        '200': { description: User profile, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user: { $ref: '#/components/schemas/User' }
         '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
     patch:
       summary: Update basic user profile fields (name, email, phone optional)
@@ -112,7 +177,20 @@ paths:
                 email: { type: string }
                 phone: { type: string }
       responses:
-        '200': { description: Updated profile, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user: { $ref: '#/components/schemas/User' }
+                          cacheInvalidated: { type: boolean }
         '400': { description: Validation error, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
         '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
   /api/predictions:

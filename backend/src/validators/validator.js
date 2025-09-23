@@ -29,3 +29,24 @@ export const phoneValidation = {
   },
   message: () => 'Phone must be a valid E.164 number (e.g. +15551234567)'
 };
+
+// Generic numeric range validator factory
+function buildRangeValidator(min, max, label) {
+  return {
+    validator: function(v) {
+      if (v == null) return false; // required handled at schema but guard
+      if (typeof v !== 'number' || Number.isNaN(v)) return false;
+      return v >= min && v <= max;
+    },
+    message: () => `${label} must be between ${min} and ${max}`
+  };
+}
+
+// Time component validators
+export const timeHourValidation = buildRangeValidator(0, 23, 'Hour');
+export const timeMinuteValidation = buildRangeValidator(0, 59, 'Minute');
+export const timeSecondValidation = buildRangeValidator(0, 59, 'Second');
+
+// Geo coordinate validators
+export const latitudeValidation = buildRangeValidator(-90, 90, 'Latitude');
+export const longitudeValidation = buildRangeValidator(-180, 180, 'Longitude');
