@@ -18,6 +18,7 @@ import profileRoutes from './src/routes/profile.routes.js';
 import predictionRoutes from './src/routes/prediction.routes.js';
 import paymentRoutes from './src/routes/payment.routes.js';
 import reportRoutes from './src/routes/report.routes.js';
+import otpConfig from './src/config/otp.config.js';
 import { initRedis } from './src/services/redis.service.js';
 
 import { notFound, errorHandler } from './src/middleware/error.middleware.js';

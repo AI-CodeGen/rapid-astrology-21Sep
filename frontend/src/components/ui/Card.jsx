@@ -1,7 +1,7 @@
 import React from 'react';
 import clsx from 'clsx';
 
-export function Card({ title, actions, className = '', children }) {
+export function Card({ title, actions, className = '', children, centerTitle = false }) {
   return (
     <section
       className={clsx(
@@ -11,9 +11,19 @@ export function Card({ title, actions, className = '', children }) {
       )}
     >
       {(title || actions) && (
-        <header className="flex items-start justify-between gap-4 mb-2">
+        <header
+          className={clsx(
+            'flex items-start gap-4 mb-2',
+            actions ? 'justify-between' : (centerTitle ? 'justify-center text-center' : 'justify-between')
+          )}
+        >
           {title && (
-            <h2 className="text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100">
+            <h2
+              className={clsx(
+                'text-lg font-semibold tracking-tight text-slate-800 dark:text-slate-100',
+                centerTitle && !actions && 'w-full'
+              )}
+            >
               {title}
             </h2>
           )}
