@@ -39,13 +39,27 @@ export async function me(req, res) {
 
 export async function updateProfileBasics(req, res, next) {
   try {
-    const { name, email, theme } = req.body;
-    if (name) req.dbUser.name = name;
-    if (email) req.dbUser.email = email;
-    if (theme) req.dbUser.settings.theme = theme;
+    const { name, email, theme, userBasicDetails } = req.body;
+    if (name !== undefined) req.dbUser.name = name;
+    if (email !== undefined) req.dbUser.email = email;
+    if (theme !== undefined) req.dbUser.settings.theme = theme;
+
+    if (userBasicDetails) {
+      // userBasicDetails: { dob, time: { hour, minute, second }, place: { name, ... } or legacy string }
+      const dest = req.dbUser.userBasicDetails || (req.dbUser.userBasicDetails = {});
+      if (userBasicDetails.dob !== undefined) dest.dob = userBasicDetails.dob ? new Date(userBasicDetails.dob) : undefined;
+      if (userBasicDetails.time) {
+        const { hour, minute, second } = userBasicDetails.time;
+        dest.time = { hour, minute, second: second ?? 0 };
+      }
+      if (userBasicDetails.place !== undefined) {
+        // Accept either string (legacy) or object
+        dest.place = userBasicDetails.place;
+      }
+    }
+
     await req.dbUser.save();
-    // Invalidate numerology cache if user's name changed (affects display context for predictions maybe)
-    await invalidateNumerologyCache();
-  res.json(buildSuccessPayload({ requestId: req.requestId, data: { user: serializeUser(req.dbUser), cacheInvalidated: true }, message: 'profile_updated' }));
+    if (name !== undefined) await invalidateNumerologyCache();
+    res.json(buildSuccessPayload({ requestId: req.requestId, data: { user: serializeUser(req.dbUser) }, message: 'profile_updated' }));
   } catch (e) { next(e); }
 }

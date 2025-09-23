@@ -165,7 +165,7 @@ paths:
                           user: { $ref: '#/components/schemas/User' }
         '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
     patch:
-      summary: Update basic user profile fields (name, email, phone optional)
+      summary: Update basic user profile fields (name, email) and basic details (dob, time, place)
       requestBody:
         required: true
         content:
@@ -173,9 +173,23 @@ paths:
             schema:
               type: object
               properties:
-                name: { type: string }
-                email: { type: string }
-                phone: { type: string }
+                name: { type: string, description: Display name (will influence numerology) }
+                email: { type: string, description: User email (normalized lowercase) }
+                userBasicDetails:
+                  type: object
+                  description: Structured basic birth details; all fields optional and may be partially provided.
+                  properties:
+                    dob: { type: string, format: date, description: Date of birth in ISO yyyy-mm-dd }
+                    time:
+                      $ref: '#/components/schemas/TimeObject'
+                    place:
+                      oneOf:
+                        - type: string
+                        - $ref: '#/components/schemas/PlaceObject'
+                  example:
+                    dob: '1990-05-12'
+                    time: { hour: 14, minute: 35, second: 0 }
+                    place: { name: 'Bengaluru', state: 'Karnataka', country: 'India', latitude: 12.9716, longitude: 77.5946 }
       responses:
         '200':
           description: Updated profile

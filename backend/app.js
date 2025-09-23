@@ -19,6 +19,7 @@ import profileRoutes from './src/routes/profile.routes.js';
 import predictionRoutes from './src/routes/prediction.routes.js';
 import paymentRoutes from './src/routes/payment.routes.js';
 import reportRoutes from './src/routes/report.routes.js';
+import placeRoutes from './src/routes/place.routes.js';
 import otpConfig from './src/config/otp.config.js';
 import { initRedis } from './src/services/redis.service.js';
 
@@ -151,6 +152,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/predictions', predictionRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/places', placeRoutes);
 
 // 404 & Error handlers
 app.use(notFound);
