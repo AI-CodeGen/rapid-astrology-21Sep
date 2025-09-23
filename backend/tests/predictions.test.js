@@ -25,7 +25,7 @@ describe('Numerology & Predictions API', () => {
     const uri = mongoServer.getUri();
     await mongoose.disconnect();
     await mongoose.connect(uri);
-    const user = await User.create({ phone: '+10000000001' });
+  const user = await User.create({ phone: '+10000000001', name: 'TestUser' });
     serverToken = signToken({ uid: user._id, roles: user.roles || ['user'] });
   });
 

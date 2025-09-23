@@ -40,10 +40,12 @@ describe('OTP service logic', () => {
     const phoneX = '+15550003333';
     const r = await generateAndStoreOTP({ phone: phoneX });
     const wrong = '000000';
-    for (let i = 0; i < 6; i++) { // 6 attempts > threshold 5
+    for (let i = 0; i < 6; i++) {
+      // 6 attempts > threshold 5
       const v = await verifyOTP({ phone: phoneX, otp: wrong });
       if (i < 5) expect(v.valid).toBe(false);
       if (i === 5) expect(v.reason).toBe('locked');
     }
   });
+
 });

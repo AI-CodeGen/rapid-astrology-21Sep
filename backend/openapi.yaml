@@ -1,0 +1,235 @@
+openapi: 3.1.0
+info:
+  title: Rapid Astrology API
+  version: 0.1.0
+  description: API with standardized success & error envelopes, correlation IDs, and validation codes.
+servers:
+  - url: http://localhost:4000
+components:
+  schemas:
+    SuccessEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string }
+        requestId: { type: string, format: uuid }
+        timestamp: { type: string, format: date-time }
+        time:
+          type: string
+          format: date-time
+          deprecated: true
+          description: Legacy alias for timestamp; will be removed in a future version.
+    ErrorDetail:
+      type: object
+      properties:
+        field: { type: string }
+        code: { type: string }
+        message: { type: string }
+    ErrorEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        error: { type: string }
+        message: { type: string }
+        status: { type: integer }
+        requestId: { type: string }
+        timestamp: { type: string, format: date-time }
+        details:
+          type: array
+          items: { $ref: '#/components/schemas/ErrorDetail' }
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      status: { type: string }
+  /api/auth/otp/request:
+    post:
+      summary: Request OTP for phone login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone: { type: string, example: '+15551234567' }
+              required: [phone]
+      responses:
+        '200':
+          description: OTP issued (masked)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /api/auth/otp/verify:
+    post:
+      summary: Verify OTP and obtain auth token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone: { type: string }
+                code: { type: string }
+              required: [phone, code]
+      responses:
+        '200': { description: Authenticated, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+        '400': { description: Validation/auth error, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+  /api/auth/me:
+    get:
+      summary: Get current user profile
+      responses:
+        '200': { description: User profile, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+    patch:
+      summary: Update basic user profile fields (name, email, phone optional)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string }
+                phone: { type: string }
+      responses:
+        '200': { description: Updated profile, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+        '400': { description: Validation error, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+        '401': { description: Unauthorized, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+  /api/predictions:
+    get:
+      summary: List user predictions (paginated)
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100 }
+      responses:
+        '200': { description: Predictions list, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+  /api/predictions/numerology/name-number:
+    post:
+      summary: Generate a numerology name-number prediction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+              required: [name]
+      responses:
+        '200': { description: Prediction created, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+        '400': { description: Validation error, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+  /api/predictions/numerology/destiny-match:
+    post:
+      summary: Generate a numerology destiny match prediction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName: { type: string }
+                secondName: { type: string }
+              required: [firstName, secondName]
+      responses:
+        '200': { description: Prediction created, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+        '400': { description: Validation error, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+  /api/profile/members:
+    get:
+      summary: List profile members
+      responses:
+        '200': { description: Member list, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+    post:
+      summary: Add a member to profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                relation: { type: string }
+                dob: { type: string, format: date }
+                gender: { type: string }
+              required: [name]
+      responses:
+        '200': { description: Member added, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+        '400': { description: Validation error, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+  /api/payments/initiate:
+    post:
+      summary: Initiate a payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount: { type: number }
+                productInfo: { type: string }
+              required: [amount]
+      responses:
+        '200': { description: Payment initiated, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+        '400': { description: Validation error, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+  /api/payments:
+    get:
+      summary: List recent payments
+      responses:
+        '200': { description: Payments list, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+  /api/payments/tx/{txnid}:
+    get:
+      summary: Get payment by transaction id
+      parameters:
+        - in: path
+          name: txnid
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Payment detail, content: { application/json: { schema: { $ref: '#/components/schemas/SuccessEnvelope' } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+  /api/payments/payu/callback:
+    post:
+      summary: PayU gateway callback (redirects to success/failure)
+      responses:
+        '302': { description: Redirect based on payment status }
+  /api/reports/prediction/{id}/pdf:
+    get:
+      summary: Download prediction PDF (numerology name-number only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: PDF binary, content: { application/pdf: { schema: { type: string, format: binary } } } }
+        '404': { description: Not found, content: { application/json: { schema: { $ref: '#/components/schemas/ErrorEnvelope' } } } }
+  /api/reports/predictions.csv:
+    get:
+      summary: Download predictions CSV
+      responses:
+        '200': { description: CSV export, content: { text/csv: { schema: { type: string, format: binary } } } }

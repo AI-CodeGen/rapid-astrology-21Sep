@@ -52,7 +52,11 @@ function isInRetryWindow(user) {
 
 export async function generateAndStoreOTP({ phone }) {
   let user = await User.findOne({ phone });
-  if (!user) user = await User.create({ phone });
+  if (!user) {
+    // Provide a default placeholder name to satisfy creation-time name requirement
+    const suffix = phone ? phone.slice(-4) : Math.random().toString(36).slice(2,6);
+    user = await User.create({ phone, name: `User${suffix}` });
+  }
 
   // Enforce minimal resend interval (does not block initial issuance)
   if (withinMinResendInterval(user)) {

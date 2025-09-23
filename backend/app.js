@@ -1,5 +1,6 @@
 // Rapid Astrology Backend Entry Point
 import express from 'express';
+import { randomUUID } from 'crypto';
 import client from 'prom-client';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -22,6 +23,7 @@ import otpConfig from './src/config/otp.config.js';
 import { initRedis } from './src/services/redis.service.js';
 
 import { notFound, errorHandler } from './src/middleware/error.middleware.js';
+import { buildSuccessPayload } from './src/utils/errorCodes.js';
 
 dotenv.config();
 
@@ -82,6 +84,14 @@ app.use(hpp());
 app.use(morgan('dev'));
 app.use(passport.initialize());
 
+// Correlation / Request ID middleware
+app.use((req, res, next) => {
+	const reqId = req.headers['x-request-id'] || randomUUID();
+	req.requestId = reqId;
+	res.setHeader('x-request-id', reqId);
+	next();
+});
+
 // Rate limiting
 const limiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
@@ -93,7 +103,11 @@ app.use('/api', limiter);
 
 // --- Health Check ---
 app.get('/health', (_req, res) => {
-	res.json({ status: 'ok', time: new Date().toISOString() });
+	// Maintain legacy shape: original tests expected { status: 'ok', time: <iso> }
+	// New standardized envelope provides timestamp; we alias it to time for backward compatibility
+	const payload = buildSuccessPayload({ data: { status: 'ok' }, requestId: _req.requestId, message: 'health' });
+	payload.time = payload.timestamp; // legacy field
+	res.json(payload);
 });
 
 // Prometheus metrics setup
@@ -104,10 +118,31 @@ app.get('/metrics', async (req, res) => {
 	try {
 		res.set('Content-Type', register.contentType);
 		const metrics = await register.metrics();
-		res.send(metrics);
+		res.send(metrics); // plain text
 	} catch (e) {
-		res.status(500).send(e.message);
+		res.status(500).json(buildSuccessPayload({ data: { error: e.message }, requestId: req.requestId, message: 'metrics_error' }));
 	}
+});
+
+// JSON line logging middleware (after requestId so it can be used)
+app.use((req, res, next) => {
+	const start = process.hrtime.bigint();
+	res.on('finish', () => {
+		const diffMs = Number(process.hrtime.bigint() - start) / 1e6;
+		const logEntry = {
+			requestId: req.requestId,
+			method: req.method,
+			url: req.originalUrl,
+			status: res.statusCode,
+			ms: +diffMs.toFixed(2),
+			userId: req.user?.id || null,
+			roles: req.user?.roles || undefined,
+			ts: new Date().toISOString()
+		};
+		// eslint-disable-next-line no-console
+		console.log(JSON.stringify(logEntry));
+	});
+	next();
 });
 
 // --- API Routes ---
