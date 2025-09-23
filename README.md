@@ -373,6 +373,9 @@ If you run the backend directly without `docker-compose`, change `MONGO_URI` fro
 | MONGO_URI | Mongo connection string |
 | JWT_SECRET | JWT signing secret |
 | OTP_EXPIRY_MINUTES | OTP validity in minutes |
+| OTP_MIN_RESEND_INTERVAL_SECONDS | Minimum seconds before a new OTP can be requested for same user |
+| OTP_RETRY_WINDOW_SECONDS | Rolling window for counting OTP verification attempts |
+| OTP_MAX_ATTEMPTS | Max allowed failed attempts within retry window before lock/reset |
 | GOOGLE_CLIENT_ID/SECRET/CALLBACK_URL | Google OAuth credentials |
 | PAYU_MERCHANT_KEY/SALT/BASE_URL | PayU gateway credentials (sandbox by default) |
 | FRONTEND_URL | Allowed CORS origin |
@@ -381,6 +384,44 @@ If you run the backend directly without `docker-compose`, change `MONGO_URI` fro
 | CACHE_TTL_SECONDS | Redis cache TTL for numerology (default 3600) |
 | BACKEND_PUBLIC_URL | Publicly accessible base URL of backend (used for PayU callbacks) |
 | (Frontend) VITE_GOOGLE_OAUTH_ENABLED | Toggle displaying Google login button (default true) |
+
+### OTP Flow (Config‑Driven)
+OTP behavior is controlled centrally in `src/config/otp.config.js` pulling from the above env vars. Features:
+1. Length & type (numeric/alphabetic/alphanumeric) – can be extended.
+2. Expiry (minutes) via `OTP_EXPIRY_MINUTES`.
+3. Resend throttling via `OTP_MIN_RESEND_INTERVAL_SECONDS` (returns 429 with `retryAfterSeconds`).
+4. Attempt window via `OTP_RETRY_WINDOW_SECONDS` combined with `OTP_MAX_ATTEMPTS` to lock/reset OTP if exceeded.
+5. Attempts & last issue timestamp stored on `User` document (`otpAttemptCount`, `lastOtpIssuedAt`).
+
+### Metrics
+A Prometheus scrape endpoint is exposed at `GET /metrics` (no auth by default – protect via reverse proxy or network policy in production).
+
+Exported metrics:
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `process_*` & default node metrics | various | n/a | From `prom-client.collectDefaultMetrics()` |
+| `otp_requests_total` | counter | `result` = `ok` \| `too_soon` | OTP generation attempts |
+| `otp_verifications_total` | counter | `result` = `valid` \| `invalid` \| `locked` | OTP verification outcomes |
+| `otp_active_users` | gauge | none | Users currently holding an active (unconsumed & unexpired) OTP |
+
+Integrate with Prometheus:
+```
+scrape_configs:
+  - job_name: rapid_astrology_backend
+    static_configs:
+      - targets: ['backend-host:4000']
+    metrics_path: /metrics
+```
+
+Alerting examples (pseudo):
+```
+ALERT OTPHighInvalidRate
+  IF sum(increase(otp_verifications_total{result="invalid"}[5m]))
+     / sum(increase(otp_verifications_total[5m])) > 0.8
+  FOR 10m
+  LABELS { severity = "warning" }
+  ANNOTATIONS { summary = "High OTP invalid rate" }
+```
 
 ## Security Notes
 - Helmet with custom CSP (script-src narrowed), rate limiting (global + per-OTP), HPP, CORS.

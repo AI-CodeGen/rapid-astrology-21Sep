@@ -16,6 +16,8 @@ const UserSchema = new mongoose.Schema({
   passwordHash: { type: String }, // for optional fallback login
   otpHash: { type: String },
   otpExpiresAt: { type: Date },
+  lastOtpIssuedAt: { type: Date },
+  otpAttemptCount: { type: Number, default: 0 },
   roles: { type: [String], default: ['user'] },
   members: { type: [MemberSchema], default: [] },
   lastLoginAt: { type: Date },

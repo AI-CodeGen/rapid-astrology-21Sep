@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import { generateAndStoreOTP, verifyOTP } from '../services/otp.service.js';
+import { sendOtpSms } from '../services/notification.service.js';
 import { signToken } from '../services/jwt.service.js';
 import { invalidateNumerologyCache } from '../services/numerology.service.js';
 import { serializeUser } from '../utils/serializeUser.js';
@@ -9,7 +10,11 @@ export async function requestOTP(req, res, next) {
     const { phone } = req.body;
     if (!phone) return res.status(400).json({ message: 'Phone required' });
     const result = await generateAndStoreOTP({ phone });
-    // In test environment include the raw OTP so tests can perform a full verification flow
+    if (result.success === false && result.reason === 'resend_too_soon') {
+      return res.status(429).json(result);
+    }
+    // Attempt async send (non-blocking if needed)
+    try { await sendOtpSms({ phone, otp: result.otp }); } catch (err) { console.warn('OTP SMS send failed:', err.message); }
     const includeOtp = (process.env.NODE_ENV || '').toLowerCase() === 'test';
     res.json({ success: true, phone: result.phone, expiresAt: result.expiresAt, ...(includeOtp && result.otp ? { otp: result.otp } : {}) });
   } catch (e) { next(e); }

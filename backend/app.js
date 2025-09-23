@@ -1,5 +1,6 @@
 // Rapid Astrology Backend Entry Point
 import express from 'express';
+import client from 'prom-client';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -92,6 +93,20 @@ app.use('/api', limiter);
 // --- Health Check ---
 app.get('/health', (_req, res) => {
 	res.json({ status: 'ok', time: new Date().toISOString() });
+});
+
+// Prometheus metrics setup
+const register = client.register;
+client.collectDefaultMetrics();
+
+app.get('/metrics', async (req, res) => {
+	try {
+		res.set('Content-Type', register.contentType);
+		const metrics = await register.metrics();
+		res.send(metrics);
+	} catch (e) {
+		res.status(500).send(e.message);
+	}
 });
 
 // --- API Routes ---
