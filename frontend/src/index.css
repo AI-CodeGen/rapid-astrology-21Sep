@@ -52,3 +52,11 @@ body {
 
 .fade-in { @apply animate-fade-in; }
 .scale-in { @apply animate-scale-in; }
+
+/* Toast animations */
+@keyframes toast-enter {
+  0% { transform: translateY(8px) translateX(16px) scale(.96); opacity: 0; }
+  60% { transform: translateY(-2px) translateX(0) scale(1.02); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.animate-toast-enter { animation: toast-enter 420ms cubic-bezier(.16,.84,.44,1); }
