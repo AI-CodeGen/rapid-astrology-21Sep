@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import ThemeToggle from '../ThemeToggle.jsx';
@@ -22,22 +22,9 @@ export default function HeaderBar({ onOpenMobile, mobileOpen, onCloseMobile }) {
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
           <Link to="/" className="font-semibold text-slate-800 dark:text-slate-100 tracking-tight text-lg">
-            RapidAstro
+            Rapid Astrology
           </Link>
-          <nav className="hidden lg:flex items-center gap-6 text-sm">
-            {navGroups.flatMap(g => g.items).map(item => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) => clsx(
-                  'relative text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition',
-                  isActive && 'text-slate-900 dark:text-white font-medium'
-                )}
-              >
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
+          <GroupMenus />
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
             {token ? (
@@ -74,5 +61,76 @@ export default function HeaderBar({ onOpenMobile, mobileOpen, onCloseMobile }) {
         </div>
       </div>
     </header>
+  );
+}
+
+// Desktop group dropdown menus
+function GroupMenus() {
+  const [open, setOpen] = useState(null); // group id
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(e.target)) setOpen(null);
+    }
+    function handleKey(e) {
+      if (e.key === 'Escape') setOpen(null);
+    }
+    window.addEventListener('mousedown', handleClick);
+    window.addEventListener('keydown', handleKey);
+    return () => {
+      window.removeEventListener('mousedown', handleClick);
+      window.removeEventListener('keydown', handleKey);
+    };
+  }, []);
+
+  return (
+    <nav ref={containerRef} className="hidden lg:flex items-center gap-4 text-sm" aria-label="Primary">
+      {navGroups.map(group => {
+        const isOpen = open === group.id;
+        return (
+          <div key={group.id} className="relative">
+            <button
+              onClick={() => setOpen(isOpen ? null : group.id)}
+              aria-haspopup="true"
+              aria-expanded={isOpen}
+              aria-controls={`menu-${group.id}`}
+              className={clsx(
+                'inline-flex items-center gap-1 px-1 py-2 font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-md',
+                'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+              )}
+            >
+              {group.label}
+              <span className={clsx('text-xs transition-transform', isOpen && 'rotate-180')}>▼</span>
+            </button>
+            {isOpen && (
+              <div
+                id={`menu-${group.id}`}
+                role="menu"
+                aria-label={group.label}
+                className="absolute left-0 top-full mt-2 min-w-[14rem] rounded-lg border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur shadow-lg p-2 z-50 animate-scale-in"
+              >
+                {group.items.map(item => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    role="menuitem"
+                    className={({ isActive }) => clsx(
+                      'block w-full text-left px-3 py-2 rounded-md text-sm transition',
+                      'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
+                      isActive && 'bg-brand-600/10 text-slate-900 dark:text-white'
+                    )}
+                    onClick={() => setOpen(null)}
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </nav>
   );
 }
