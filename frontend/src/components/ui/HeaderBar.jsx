@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useToast } from '../../context/ToastContext.jsx';
 import ThemeToggle from '../ThemeToggle.jsx';
 import { navGroups } from '../navigationData.js';
 import { Menu, X, LogOut } from 'lucide-react';
@@ -9,6 +10,8 @@ import clsx from 'clsx';
 // New standardized header bar (fixed)
 export default function HeaderBar({ onOpenMobile, mobileOpen, onCloseMobile }) {
   const { user, logout, token } = useAuth();
+  const toast = useToast();
+  const logoutLock = useRef(false);
 
   return (
     <header className="fixed top-0 inset-x-0 z-40">
@@ -39,8 +42,9 @@ export default function HeaderBar({ onOpenMobile, mobileOpen, onCloseMobile }) {
                   {user?.name || 'Profile'}
                 </NavLink>
                 <button
-                  onClick={logout}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium bg-slate-200/70 dark:bg-slate-700/70 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  onClick={() => { if (logoutLock.current) return; logoutLock.current = true; logout(); toast.success('Logout successful'); setTimeout(()=>{ logoutLock.current=false; }, 600); }}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium bg-slate-200/70 dark:bg-slate-700/70 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50"
+                  disabled={logoutLock.current}
                 >
                   <LogOut className="h-4 w-4" />
                   Logout

@@ -6,6 +6,7 @@ import Card from '../components/ui/Card.jsx';
 import { Input } from '../components/ui/Input.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Pencil } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 
 export default function ProfilePage() {
   const { token } = useAuth();
@@ -46,7 +47,8 @@ export default function ProfilePage() {
     }
   }
 
-  if (!token) return <Box><p className="text-sm text-slate-600 dark:text-slate-300 text-center">Please login.</p></Box>;
+  // If user is not authenticated, redirect to landing page instead of showing message
+  if (!token) return <Navigate to="/" replace />;
   if (!profile) return <Box><p className="text-sm text-slate-600 dark:text-slate-300 text-center">Loading...</p></Box>;
 
   const phone = profile.phone || '';

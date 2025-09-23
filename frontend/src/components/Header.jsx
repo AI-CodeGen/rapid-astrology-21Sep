@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import DisciplineMenu from './DisciplineMenu';
@@ -6,11 +6,14 @@ import MobileMenu from './MobileMenu';
 import Container from './Container';
 import { Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext.jsx';
 
 export default function Header() {
   const { token, user, logout } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const logoutLock = useRef(false);
   return (
     <header className="sticky top-0 z-40 backdrop-blur-xl bg-slate-900/60 dark:bg-slate-950/50 border-b border-white/10">
       <Container className="h-16 flex items-center justify-between gap-4">
@@ -37,8 +40,16 @@ export default function Header() {
             <>
               <Link to='/profile' className="btn-ghost max-w-[140px] truncate">{user?.name || 'Profile'}</Link>
               <button
-                onClick={() => { logout(); navigate('/'); }}
-                className="btn-primary px-3 py-2 text-sm"
+                onClick={() => {
+                  if (logoutLock.current) return;
+                  logoutLock.current = true;
+                  logout();
+                  navigate('/');
+                  toast.success('Logout successful');
+                  setTimeout(()=>{ logoutLock.current = false; }, 600);
+                }}
+                className="btn-primary px-3 py-2 text-sm disabled:opacity-50"
+                disabled={logoutLock.current}
               >Logout</button>
             </>
           ) : (
