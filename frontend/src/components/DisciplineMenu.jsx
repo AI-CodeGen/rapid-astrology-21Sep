@@ -1,18 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-
-// Accessible menu data (added Destiny Match)
-const menu = [
-  { label: 'Numerology', id: 'numerology', items: [
-      { label:'Name Number', path:'/numerology/name-number' },
-      { label:'Destiny Match', path:'/numerology/destiny-match' }
-    ] },
-  { label: 'Astrology', id: 'astrology', items: [
-      { label:'Kundli', path:'/astrology/kundli' },
-      { label:'KP Astrology', path:'/astrology/kp' },
-      { label:'Kundli Matching', path:'/astrology/kundli-matching' }
-    ] }
-];
+import { navGroups as menu } from './navigationData';
 
 export default function DisciplineMenu() {
   const [openMenu, setOpenMenu] = useState(null); // id of open top-level menu
@@ -91,11 +79,11 @@ export default function DisciplineMenu() {
   };
 
   return (
-    <nav aria-label="Primary" role="menubar" style={{ display:'flex', gap:'1rem' }}>
+    <nav aria-label="Primary" role="menubar" className="flex gap-4">
       {menu.map(group => {
         const isOpen = openMenu === group.id;
         return (
-          <div key={group.id} style={{ position:'relative' }}>
+          <div key={group.id} className="relative">
             <button
               ref={el => buttonsRef.current[group.id] = el}
               aria-haspopup="true"
@@ -104,10 +92,10 @@ export default function DisciplineMenu() {
               role="menuitem"
               onClick={() => setOpenMenu(isOpen ? null : group.id)}
               onKeyDown={(e) => handleTopLevelKey(e, group)}
-              style={{ fontWeight:'bold', background:'none', border:'none', cursor:'pointer' }}
+              className={"text-sm font-medium tracking-wide text-slate-200 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 px-1 py-2 flex items-center gap-1 group"}
             >
               {group.label}
-              <span aria-hidden="true" style={{ marginLeft:4 }}>{isOpen ? '▲' : '▼'}</span>
+              <span aria-hidden="true" className={`transition-transform text-xs mt-0.5 ${isOpen ? 'rotate-180' : ''}`}>▼</span>
             </button>
             {isOpen && (
               <div
@@ -116,7 +104,7 @@ export default function DisciplineMenu() {
                 role="menu"
                 aria-label={group.label}
                 onKeyDown={(e) => handleListKey(e, group)}
-                style={{ display:'flex', flexDirection:'column', position:'absolute', background:'#fff', padding:'0.5rem', border:'1px solid #ccc', zIndex:10, minWidth:180 }}
+                className="absolute left-0 mt-2 w-56 origin-top-left rounded-lg glass p-2 backdrop-saturate-150 animate-scale-in border border-white/10 shadow-xl focus:outline-none"
               >
                 {group.items.map(item => (
                   <Link
@@ -124,7 +112,7 @@ export default function DisciplineMenu() {
                     to={item.path}
                     role="menuitem"
                     tabIndex={0}
-                    style={{ padding:'0.25rem 0', textDecoration:'none', color:'#333' }}
+                    className="block rounded-md px-3 py-2 text-sm text-slate-100 hover:bg-white/10 focus:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
                   >
                     {item.label}
                   </Link>

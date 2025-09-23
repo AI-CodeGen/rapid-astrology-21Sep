@@ -5,8 +5,12 @@ const ThemeContext = createContext();
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState('day');
   useEffect(() => {
-    document.body.style.background = theme === 'night' ? '#111' : '#fafafa';
-    document.body.style.color = theme === 'night' ? '#eee' : '#111';
+    const root = document.documentElement;
+    if (theme === 'night') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
   }, [theme]);
   const toggle = () => setTheme(t => t === 'day' ? 'night' : 'day');
   return <ThemeContext.Provider value={{ theme, toggle }}>{children}</ThemeContext.Provider>;

@@ -3,10 +3,10 @@ node_modules/
 **/node_modules/
 
 # Env files
-.env
-.env.*
-backend/.env
-frontend/.env
+#.env
+#.env.*
+#backend/.env
+#frontend/.env
 backend/ENV_EXAMPLE
 frontend/ENV_EXAMPLE
 

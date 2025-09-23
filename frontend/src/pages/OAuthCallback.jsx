@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import api from '../services/api';
+import Box from '../components/ui/Box.jsx';
+import Card from '../components/ui/Card.jsx';
 
 export default function OAuthCallback() {
   const navigate = useNavigate();
@@ -32,5 +34,13 @@ export default function OAuthCallback() {
     }
   }, [login, navigate]);
 
-  return <div>Completing OAuth login...</div>;
+  return (
+    <Box>
+      <div className="max-w-md">
+        <Card title="OAuth">
+          <p className="text-sm text-slate-600 dark:text-slate-300">Completing OAuth login...</p>
+        </Card>
+      </div>
+    </Box>
+  );
 }

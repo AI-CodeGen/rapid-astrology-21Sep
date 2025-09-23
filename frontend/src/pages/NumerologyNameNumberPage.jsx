@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { nameNumber } from '../services/numerologyService';
+import Box from '../components/ui/Box.jsx';
+import Card from '../components/ui/Card.jsx';
+import { Input } from '../components/ui/Input.jsx';
 
 export default function NumerologyNameNumberPage() {
   const [name, setName] = useState('');
@@ -20,19 +23,39 @@ export default function NumerologyNameNumberPage() {
     URL.revokeObjectURL(url);
   }
 
-  return <div style={{ maxWidth:500 }}>
-    <h2>Name Number</h2>
-    <form onSubmit={submit}>
-      <input placeholder='Enter Name' value={name} onChange={e=>setName(e.target.value)} />
-      <button type='submit'>Calculate</button>
-    </form>
-    {result && <div style={{ marginTop:'1rem' }}>
-      <h3>Result</h3>
-      <p>Number: {result.number}</p>
-      <p>Total: {result.total}</p>
-      <p>Meaning: {result.meaning}</p>
-      <button onClick={downloadJSON}>Download JSON</button>
-      <a href={`/api/reports/predictions.csv`} style={{ marginLeft:'0.5rem' }}>Download CSV (All)</a>
-    </div>}
-  </div>;
+  return (
+    <Box>
+      <div className="max-w-xl space-y-6">
+        <Card title="Name Number">
+          <form onSubmit={submit} className="space-y-4">
+            <Input placeholder='Enter Name' value={name} onChange={e=>setName(e.target.value)} required />
+            <button type='submit' className="btn-primary px-4 py-2 rounded-lg text-sm font-medium">Calculate</button>
+          </form>
+          {result && (
+            <div className="mt-6 space-y-3">
+              <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200">Result</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                <div className="p-3 rounded-md bg-slate-100 dark:bg-slate-800/70">
+                  <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Number</div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-100">{result.number}</div>
+                </div>
+                <div className="p-3 rounded-md bg-slate-100 dark:bg-slate-800/70">
+                  <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Total</div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-100">{result.total}</div>
+                </div>
+                <div className="p-3 rounded-md bg-slate-100 dark:bg-slate-800/70 sm:col-span-1">
+                  <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Meaning</div>
+                  <div className="font-medium text-slate-800 dark:text-slate-100">{result.meaning}</div>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3 pt-2">
+                <button onClick={downloadJSON} type="button" className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-200/70 dark:bg-slate-700/70 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100">Download JSON</button>
+                <a href={`/api/reports/predictions.csv`} className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-200/70 dark:bg-slate-700/70 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100">Download CSV (All)</a>
+              </div>
+            </div>
+          )}
+        </Card>
+      </div>
+    </Box>
+  );
 }
