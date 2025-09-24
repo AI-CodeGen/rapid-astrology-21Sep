@@ -28,24 +28,65 @@ npm install
 npm run dev
 ```
 
-### Key Endpoints (Auth & Profile)
-- `POST /api/auth/otp/request { phone }`
-- `POST /api/auth/otp/verify { phone, otp }` -> returns JWT
-- `GET /api/auth/me` (auth)
-- `PATCH /api/auth/me` (auth) update profile
- - `GET /api/auth/google` (redirects to Google OAuth consent)
- - `GET /api/auth/google/callback` (OAuth completion -> issues JWT & redirects to `/login?token=...`)
+### Key Endpoints (Auth & Profile) – Versioned (`/api/v1`)
+- `POST /api/v1/auth/otp/request { phone }`
+- `POST /api/v1/auth/otp/verify { phone, otp }` -> returns JWT
+- `GET /api/v1/auth/me` (auth)
+- `PATCH /api/v1/auth/me` (auth) update profile
+ - `GET /api/v1/auth/google` (redirects to Google OAuth consent)
+ - `GET /api/v1/auth/google/callback` (OAuth completion -> issues JWT & redirects to `/login?token=...`)
+
+### Standard Success Envelope (Backend → Frontend Contract)
+All successful JSON responses share a normalized envelope to simplify client handling and enable correlation tracing:
+```
+{
+  "success": true,
+  "message": "<semantic_code>",
+  "requestId": "<uuid>",
+  "timestamp": "2025-09-24T18:55:24.470Z",
+  "data": {
+    // example: otp_verified
+    "token": "<jwt>",
+    "user": { "id": "...", "name": "...", ... }
+  }
+}
+```
+Notes:
+- `requestId` is generated per request and propagated; log lines include the same value.
+- `message` is a stable, machine-friendly string (e.g. `otp_verified`, `profile_updated`, `me`).
+- Domain fields (e.g. `user`, `token`, `prediction`, etc.) ALWAYS live inside `data` (never at the root).
+- Some earlier commits returned root-level `user`; a contract test now enforces the standardized nested shape.
+
+Error responses use:
+```
+{
+  "success": false,
+  "error": "VALIDATION_ERROR|RATE_LIMIT|...",
+  "message": "Human readable summary",
+  "status": 400,
+  "requestId": "<uuid>",
+  "timestamp": "...",
+  "details": [
+    { "field": "email", "code": "EMAIL_FORMAT", "message": "Email is invalid" }
+  ]
+}
+```
+
+### Contract Tests
+`backend/tests/envelope.shape.test.js` guards this envelope format (token & user must appear under `data.*`). If you change the envelope intentionally, update the test and this documentation together.
 
 ### Predictions & Numerology
-- `POST /api/predictions/numerology/name-number { name }` (auth)
-- `POST /api/predictions/numerology/destiny-match { nameA, nameB }` (auth)
-- `GET /api/predictions?page=1&limit=10` (auth) paginated predictions
+- `POST /api/v1/predictions/numerology/name-number { name }` (auth)
+- `POST /api/v1/predictions/numerology/destiny-match { nameA, nameB }` (auth)
+- `GET /api/v1/predictions?page=1&limit=10` (auth) paginated predictions
 
 ### Reports
-- `GET /api/reports/prediction/:id/pdf` (auth)
-- `GET /api/reports/predictions.csv` (auth)
-- `POST /api/payments/initiate { amount, productInfo }` (auth)
- - `POST /api/payments/payu/callback` (PayU callback target)
+- `GET /api/v1/reports/prediction/:id/pdf` (auth)
+- `GET /api/v1/reports/predictions.csv` (auth)
+- `POST /api/v1/payments/initiate { amount, productInfo }` (auth)
+ - `POST /api/v1/payments/payu/callback` (PayU callback target)
+
+> API Versioning: All new endpoints should be added under `/api/v1`. The unversioned `/api` prefix has been deprecated in favor of explicit versioning for forward compatibility. If backward compatibility is required in the future, a thin legacy router can be reintroduced to proxy `/api/*` → `/api/v1/*`.
 
 ## Frontend
 1. Copy `frontend/ENV_EXAMPLE` to `frontend/.env`.

@@ -93,14 +93,15 @@ app.use((req, res, next) => {
 	next();
 });
 
-// Rate limiting
+// Rate limiting (versioned). If backward compatibility for /api (unversioned) is desired,
+// we could dual-mount; for now we enforce explicit version prefix.
 const limiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
 	max: 300,
 	standardHeaders: true,
 	legacyHeaders: false
 });
-app.use('/api', limiter);
+app.use('/api/v1', limiter);
 
 // --- Health Check ---
 app.get('/health', (_req, res) => {
@@ -146,13 +147,13 @@ app.use((req, res, next) => {
 	next();
 });
 
-// --- API Routes ---
-app.use('/api/auth', authRoutes);
-app.use('/api/profile', profileRoutes);
-app.use('/api/predictions', predictionRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/places', placeRoutes);
+// --- API Routes (Versioned) ---
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/profile', profileRoutes);
+app.use('/api/v1/predictions', predictionRoutes);
+app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/reports', reportRoutes);
+app.use('/api/v1/places', placeRoutes);
 
 // 404 & Error handlers
 app.use(notFound);

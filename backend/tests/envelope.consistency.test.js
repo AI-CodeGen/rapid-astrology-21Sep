@@ -36,7 +36,7 @@ describe('Success envelope consistency', () => {
 
   test('OTP request returns standardized envelope', async () => {
     const p = nextPhone();
-    const res = await request(app).post('/api/auth/otp/request').send({ phone: p }).expect(200);
+  const res = await request(app).post('/api/v1/auth/otp/request').send({ phone: p }).expect(200);
     expect(res.body).toHaveProperty('success', true);
     expect(res.body).toHaveProperty('requestId');
     expect(res.body).toHaveProperty('timestamp');
@@ -44,8 +44,8 @@ describe('Success envelope consistency', () => {
 
   test('OTP verify (invalid code) returns standardized error envelope', async () => {
     const p = nextPhone();
-    await request(app).post('/api/auth/otp/request').send({ phone: p }).expect(200);
-    const verifyAttempt = await request(app).post('/api/auth/otp/verify').send({ phone: p, otp: '0000' }).expect(400);
+  await request(app).post('/api/v1/auth/otp/request').send({ phone: p }).expect(200);
+  const verifyAttempt = await request(app).post('/api/v1/auth/otp/verify').send({ phone: p, otp: '0000' }).expect(400);
     expect(verifyAttempt.body).toHaveProperty('success', false);
     expect(verifyAttempt.body).toHaveProperty('requestId');
     expect(verifyAttempt.body).toHaveProperty('timestamp');

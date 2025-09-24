@@ -25,7 +25,7 @@ export default function LoginPage() {
     if (oauthToken) {
       // Fetch profile after setting token via existing flow (AuthContext login expects user object; we'll fetch /auth/me)
       // Slight duplication with OAuthCallback page; kept here to match backend redirect to /login?token=
-      fetch('/api/auth/me', { headers: { Authorization: 'Bearer ' + oauthToken }})
+  fetch('/api/v1/auth/me', { headers: { Authorization: 'Bearer ' + oauthToken }})
         .then(r => r.json())
         .then(data => {
           if (data && data.user) {
@@ -63,7 +63,7 @@ export default function LoginPage() {
             <>
               <div className="mb-4">
                 <a
-                  href='/api/auth/google'
+                  href='/api/v1/auth/google'
                   aria-label='Continue with Google'
                   className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm transition text-center"
                 >

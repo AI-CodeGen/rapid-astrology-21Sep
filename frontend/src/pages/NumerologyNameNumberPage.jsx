@@ -50,7 +50,7 @@ export default function NumerologyNameNumberPage() {
               </div>
               <div className="flex flex-wrap gap-3 pt-2">
                 <button onClick={downloadJSON} type="button" className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-200/70 dark:bg-slate-700/70 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100">Download JSON</button>
-                <a href={`/api/reports/predictions.csv`} className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-200/70 dark:bg-slate-700/70 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100">Download CSV (All)</a>
+                <a href={`/api/v1/reports/predictions.csv`} className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-200/70 dark:bg-slate-700/70 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100">Download CSV (All)</a>
               </div>
             </div>
           )}

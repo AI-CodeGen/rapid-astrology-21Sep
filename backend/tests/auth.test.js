@@ -26,29 +26,31 @@ describe('Auth & Profile email persistence', () => {
 
   test('OTP request, verify, and email update persists', async () => {
     // Request OTP (test env returns OTP inline)
-    const reqRes = await request(app).post('/api/auth/otp/request').send({ phone }).expect(200);
+  const reqRes = await request(app).post('/api/v1/auth/otp/request').send({ phone }).expect(200);
     expect(reqRes.body).toHaveProperty('otp');
     const otp = reqRes.body.otp;
 
     // Verify OTP
-    const verifyRes = await request(app).post('/api/auth/otp/verify').send({ phone, otp }).expect(200);
-    expect(verifyRes.body).toHaveProperty('token');
-    token = verifyRes.body.token;
+  const verifyRes = await request(app).post('/api/v1/auth/otp/verify').send({ phone, otp }).expect(200);
+  expect(verifyRes.body).toHaveProperty(['data','token']);
+  token = verifyRes.body.data.token;
 
     // Update email
     const newEmail = 'user@test.dev';
     const patchRes = await request(app)
-      .patch('/api/auth/me')
+  .patch('/api/v1/auth/me')
       .set('Authorization', 'Bearer ' + token)
       .send({ email: newEmail })
       .expect(200);
-    expect(patchRes.body.user.email).toBe(newEmail);
+  const patchedUser = patchRes.body.data?.user || patchRes.body.user; // allow fallback during transition
+  expect(patchedUser.email).toBe(newEmail);
 
     // Fetch profile
     const meRes = await request(app)
-      .get('/api/auth/me')
+  .get('/api/v1/auth/me')
       .set('Authorization', 'Bearer ' + token)
       .expect(200);
-    expect(meRes.body.user.email).toBe(newEmail);
+  const meUser = meRes.body.data.user;
+  expect(meUser.email).toBe(newEmail);
   });
 });

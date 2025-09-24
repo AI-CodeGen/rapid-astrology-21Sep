@@ -34,9 +34,9 @@ describe('Numerology & Predictions API', () => {
     if (mongoServer) await mongoServer.stop();
   });
 
-  test('POST /api/predictions/numerology/name-number returns prediction with result.number', async () => {
+  test('POST /api/v1/predictions/numerology/name-number returns prediction with result.number', async () => {
     const res = await request(app)
-      .post('/api/predictions/numerology/name-number')
+  .post('/api/v1/predictions/numerology/name-number')
       .set(authHeader(serverToken))
       .send({ name: 'Alice' });
     expect(res.status).toBe(200);
@@ -45,9 +45,9 @@ describe('Numerology & Predictions API', () => {
     expect(res.body.prediction.result).toHaveProperty('number');
   });
 
-  test('POST /api/predictions/numerology/destiny-match returns prediction with compatibility score', async () => {
+  test('POST /api/v1/predictions/numerology/destiny-match returns prediction with compatibility score', async () => {
     const res = await request(app)
-      .post('/api/predictions/numerology/destiny-match')
+  .post('/api/v1/predictions/numerology/destiny-match')
       .set(authHeader(serverToken))
       .send({ firstName: 'Alice', secondName: 'Bob' });
     expect(res.status).toBe(200);
@@ -55,9 +55,9 @@ describe('Numerology & Predictions API', () => {
   expect(res.body.prediction.result).toHaveProperty('compatibility');
   });
 
-  test('GET /api/predictions paginated list works', async () => {
+  test('GET /api/v1/predictions paginated list works', async () => {
     const res = await request(app)
-      .get('/api/predictions?page=1&limit=5')
+  .get('/api/v1/predictions?page=1&limit=5')
       .set(authHeader(serverToken));
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.predictions)).toBe(true);

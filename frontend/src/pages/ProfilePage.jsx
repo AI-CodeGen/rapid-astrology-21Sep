@@ -15,13 +15,14 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [editing, setEditing] = useState({ name: false, email: false, dob: false, time: false, place: false });
+  const [editing, setEditing] = useState({ name: false, email: false, dob: false, time: false, place: false, basic: false });
   // Basic details state
   const [dob, setDob] = useState(''); // ISO date string (yyyy-mm-dd)
   const [timeHour, setTimeHour] = useState('');
   const [timeMinute, setTimeMinute] = useState('');
   const [timeSecond, setTimeSecond] = useState('');
   const [placeName, setPlaceName] = useState('');
+  const [placeObject, setPlaceObject] = useState(null);
   const [saving, setSaving] = useState(false);
   const [placeQuery, setPlaceQuery] = useState('');
   const [placeResults, setPlaceResults] = useState([]);
@@ -33,11 +34,12 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function load() {
-      const data = await getMe();
-      setProfile(data.user);
-      setName(data.user.name || '');
-      setEmail(data.user.email || '');
-      const bd = data.user.userBasicDetails || {};
+  const env = await getMe();
+  const user = env.data.user;
+  setProfile(user);
+  setName(user.name || '');
+  setEmail(user.email || '');
+  const bd = user.userBasicDetails || {};
       if (bd.dob) {
         try { setDob(new Date(bd.dob).toISOString().slice(0,10)); } catch { /* noop */ }
       }
@@ -48,7 +50,17 @@ export default function ProfilePage() {
       }
       if (bd.place) {
         if (typeof bd.place === 'string') setPlaceName(bd.place);
-        else setPlaceName(bd.place.name || '');
+        else {
+          setPlaceName(bd.place.name || '');
+          setPlaceObject({
+            name: bd.place.name,
+            district: bd.place.district,
+            state: bd.place.state,
+            country: bd.place.country,
+            latitude: bd.place.latitude,
+            longitude: bd.place.longitude
+          });
+        }
       }
     }
     if (token) load();
@@ -80,12 +92,13 @@ export default function ProfilePage() {
       const basicDetails = {
         ...(dob ? { dob } : {}),
         ...(timeProvided ? { time: { hour: parseInt(timeHour,10), minute: parseInt(timeMinute,10), second: timeSecond !== '' ? parseInt(timeSecond,10) : 0 } } : {}),
-        ...(placeName ? { place: { name: placeName } } : { place: { name: '' } })
+        ...(placeObject ? { place: placeObject } : (placeName ? { place: { name: placeName } } : {}))
       };
       if (Object.keys(basicDetails).length > 0) payload.userBasicDetails = basicDetails;
-      const upd = await updateMe(payload);
-      setProfile(upd.user);
-      setEditing({ name: false, email: false, dob: false, time: false, place: false });
+  const upd = await updateMe(payload);
+  // updateMe now returns an envelope with data.user
+  setProfile(upd.data.user);
+  setEditing({ name: false, email: false, dob: false, time: false, place: false, basic: false });
       toast.success('Profile updated successfully.');
     } catch (e) {
       toast.error('Failed to update profile');
@@ -107,7 +120,7 @@ export default function ProfilePage() {
     placeAbortRef.current = controller;
     const t = setTimeout(async ()=>{
       try {
-        const resp = await fetch(`/api/places/search?q=${encodeURIComponent(placeQuery)}&limit=3`, { signal: controller.signal, headers: { 'x-request-id': crypto.randomUUID?.() || '' } });
+  const resp = await fetch(`/api/v1/places/search?q=${encodeURIComponent(placeQuery)}&limit=3`, { signal: controller.signal, headers: { 'x-request-id': crypto.randomUUID?.() || '' } });
         if (!resp.ok) throw new Error('lookup failed');
         const json = await resp.json();
         // Support both enveloped { data: { results: [...] }} and flattened { results: [...] }
@@ -124,8 +137,17 @@ export default function ProfilePage() {
     // val can be string or object from API
     if (typeof val === 'string') {
       setPlaceName(val);
+      setPlaceObject({ name: val });
     } else {
       setPlaceName(val.name || '');
+      setPlaceObject({
+        name: val.name,
+        district: val.district,
+        state: val.state,
+        country: val.country,
+        latitude: val.latitude,
+        longitude: val.longitude
+      });
     }
     setPlaceQuery('');
     setPlaceResults([]);
@@ -146,7 +168,8 @@ export default function ProfilePage() {
 
   function handlePlaceInput(e){
     const val = e.target.value;
-    setPlaceName(val);
+  setPlaceName(val);
+  setPlaceObject(null); // manual typing resets structured object until selection
     setPlaceQuery(val);
     if(!editing.place) setEditing(ed=>({...ed, place:true}));
     setShowPlaceDropdown(val.length >= 2);
@@ -234,59 +257,96 @@ export default function ProfilePage() {
             </div>
             {/* Basic Details Section */}
             <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">Basic Details</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">Basic Details</h3>
+                <button type="button" onClick={()=>setEditing(ed=>({...ed, basic: !ed.basic, dob: !ed.basic, time: !ed.basic, place: !ed.basic}))} className="text-xs font-medium text-brand-600 hover:text-brand-500 underline-offset-2 hover:underline">
+                  {editing.basic ? 'Done' : ( (dob || placeName || (timeHour && timeMinute)) ? 'Edit' : 'Add')}
+                </button>
+              </div>
               <div className="grid md:grid-cols-2 gap-5">
                 {/* Date of Birth */}
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">Date of Birth</label>
-                  <div className="relative group cursor-pointer" onClick={handleDobWrapperClick} role="button" tabIndex={0} onKeyDown={e=>{ if(e.key==='Enter') handleDobWrapperClick(); }} aria-label="Date of Birth Picker">
-                    <Input ref={dobInputRef} type="date" value={dob} onChange={e=>{ setDob(e.target.value); if(!editing.dob) setEditing(ed=>({...ed, dob:true})); }} aria-label="Date of Birth" className="pr-10 pointer-events-none group-focus-within:pointer-events-auto" />
-                    <Calendar className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <span className="sr-only">Open date picker</span>
-                  </div>
+                  {editing.basic ? (
+                    <div className="relative group cursor-pointer" onClick={handleDobWrapperClick} role="button" tabIndex={0} onKeyDown={e=>{ if(e.key==='Enter') handleDobWrapperClick(); }} aria-label="Date of Birth Picker">
+                      <Input ref={dobInputRef} type="date" value={dob} onChange={e=>{ setDob(e.target.value); if(!editing.dob) setEditing(ed=>({...ed, dob:true})); }} aria-label="Date of Birth" className="pr-10 pointer-events-none group-focus-within:pointer-events-auto" />
+                      <Calendar className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <span className="sr-only">Open date picker</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-700 dark:text-slate-300 min-h-[40px] flex items-center">{dob || <span className="text-slate-400 italic">Not set</span>}</p>
+                  )}
                 </div>
                 {/* Time of Birth */}
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">Time of Birth (24h)</label>
-                  <div className="grid grid-cols-4 gap-2 items-center">
-                    <select value={timeHour} onChange={e=>{ setTimeHour(e.target.value); if(!editing.time) setEditing(ed=>({...ed, time:true})); }} className="border rounded-md px-2 py-1 bg-white dark:bg-slate-800 dark:border-slate-600 text-sm w-full col-span-1">
-                      <option value="">HH</option>
-                      {Array.from({length:24},(_,i)=>i.toString().padStart(2,'0')).map(h=> <option key={h} value={h}>{h}</option>)}
-                    </select>
-                    <select value={timeMinute} onChange={e=>{ setTimeMinute(e.target.value); if(!editing.time) setEditing(ed=>({...ed, time:true})); }} className="border rounded-md px-2 py-1 bg-white dark:bg-slate-800 dark:border-slate-600 text-sm w-full col-span-1">
-                      <option value="">MM</option>
-                      {Array.from({length:60},(_,i)=>i.toString().padStart(2,'0')).map(m=> <option key={m} value={m}>{m}</option>)}
-                    </select>
-                    <select value={timeSecond} onChange={e=>{ setTimeSecond(e.target.value); if(!editing.time) setEditing(ed=>({...ed, time:true})); }} className="border rounded-md px-2 py-1 bg-white dark:bg-slate-800 dark:border-slate-600 text-sm w-full col-span-1">
-                      <option value="">SS</option>
-                      {Array.from({length:60},(_,i)=>i.toString().padStart(2,'0')).map(s=> <option key={s} value={s}>{s}</option>)}
-                    </select>
-                    <div className="flex justify-center items-center col-span-1 h-full border rounded-md bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-600">
-                      <Clock className="w-5 h-5 text-slate-400" />
-                    </div>
-                  </div>
-                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Leave hour/minute blank if unknown. Seconds optional.</p>
+                  {editing.basic ? (
+                    <>
+                      <div className="grid grid-cols-4 gap-2 items-center">
+                        <select value={timeHour} onChange={e=>{ setTimeHour(e.target.value); if(!editing.time) setEditing(ed=>({...ed, time:true})); }} className="border rounded-md px-2 py-1 bg-white dark:bg-slate-800 dark:border-slate-600 text-sm w-full col-span-1">
+                          <option value="">HH</option>
+                          {Array.from({length:24},(_,i)=>i.toString().padStart(2,'0')).map(h=> <option key={h} value={h}>{h}</option>)}
+                        </select>
+                        <select value={timeMinute} onChange={e=>{ setTimeMinute(e.target.value); if(!editing.time) setEditing(ed=>({...ed, time:true})); }} className="border rounded-md px-2 py-1 bg-white dark:bg-slate-800 dark:border-slate-600 text-sm w-full col-span-1">
+                          <option value="">MM</option>
+                          {Array.from({length:60},(_,i)=>i.toString().padStart(2,'0')).map(m=> <option key={m} value={m}>{m}</option>)}
+                        </select>
+                        <select value={timeSecond} onChange={e=>{ setTimeSecond(e.target.value); if(!editing.time) setEditing(ed=>({...ed, time:true})); }} className="border rounded-md px-2 py-1 bg-white dark:bg-slate-800 dark:border-slate-600 text-sm w-full col-span-1">
+                          <option value="">SS</option>
+                          {Array.from({length:60},(_,i)=>i.toString().padStart(2,'0')).map(s=> <option key={s} value={s}>{s}</option>)}
+                        </select>
+                        <div className="flex justify-center items-center col-span-1 h-full border rounded-md bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-600">
+                          <Clock className="w-5 h-5 text-slate-400" />
+                        </div>
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Leave hour/minute blank if unknown. Seconds optional.</p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-700 dark:text-slate-300 min-h-[40px] flex items-center">{(timeHour && timeMinute) ? `${timeHour}:${timeMinute}${timeSecond? ':'+timeSecond:''}` : <span className="text-slate-400 italic">Not set</span>}</p>
+                  )}
                 </div>
                 {/* Place of Birth */}
                 <div className="md:col-span-2">
                   <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">Place of Birth</label>
-                  <div className="relative group">
-                    <Input ref={placeInputRef} value={placeName} onChange={handlePlaceInput} onFocus={()=>{ if(placeName.length>=2) setShowPlaceDropdown(true); }} placeholder="City, State, Country" aria-label="Place of Birth" className="pr-10" autoComplete="off" />
-                    <MapPin className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                    {showPlaceDropdown && (
-                      <ul className="absolute z-20 mt-1 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-md shadow-sm divide-y divide-slate-100 dark:divide-slate-700" role="listbox">
-                        {placeLoading && <li className="px-3 py-2 text-sm text-slate-500">Searching...</li>}
-                        {!placeLoading && placeResults.map(r=> (
-                          <li key={r.name} role="option" tabIndex={0} onClick={()=>selectPlace(r)} onKeyDown={e=>{ if(e.key==='Enter') selectPlace(r); }} className="px-3 py-2 text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 focus:bg-slate-100 dark:focus:bg-slate-700 focus:outline-none">
-                            <span className="block font-medium text-slate-700 dark:text-slate-200 truncate">{r.name}</span>
-                            <span className="block text-[10px] text-slate-500">{r.district || r.state || r.country || ''}</span>
-                          </li>
-                        ))}
-                        {!placeLoading && placeResults.length === 0 && <li className="px-3 py-2 text-sm text-slate-500">No places found</li>}
-                      </ul>
-                    )}
-                  </div>
-                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Start typing (2+ chars) to see suggestions. Future enhancement: geo API.</p>
+                  {editing.basic ? (
+                    <>
+                      <div className="relative group">
+                        <Input ref={placeInputRef} value={placeName} onChange={handlePlaceInput} onFocus={()=>{ if(placeName.length>=2) setShowPlaceDropdown(true); }} placeholder="City, State, Country" aria-label="Place of Birth" className="pr-10" autoComplete="off" />
+                        <MapPin className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        {showPlaceDropdown && (
+                          <ul className="absolute z-20 mt-1 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-md shadow-sm divide-y divide-slate-100 dark:divide-slate-700" role="listbox">
+                            {placeLoading && <li className="px-3 py-2 text-sm text-slate-500">Searching...</li>}
+                            {!placeLoading && placeResults.map(r=> (
+                              <li key={r.name} role="option" tabIndex={0} onClick={()=>selectPlace(r)} onKeyDown={e=>{ if(e.key==='Enter') selectPlace(r); }} className="px-3 py-2 text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 focus:bg-slate-100 dark:focus:bg-slate-700 focus:outline-none">
+                                <span className="block font-medium text-slate-700 dark:text-slate-200 truncate">{r.name}</span>
+                                <span className="block text-[10px] text-slate-500">{r.district || r.state || r.country || ''}</span>
+                              </li>
+                            ))}
+                            {!placeLoading && placeResults.length === 0 && <li className="px-3 py-2 text-sm text-slate-500">No places found</li>}
+                          </ul>
+                        )}
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Start typing (2+ chars) to see suggestions.</p>
+                      {placeObject && (
+                        <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40 p-2 rounded-md border border-slate-200 dark:border-slate-700">
+                          <div><span className="font-medium">Lat:</span> {placeObject.latitude}</div>
+                          <div><span className="font-medium">Long:</span> {placeObject.longitude}</div>
+                          <div className="col-span-2"><span className="font-medium">State:</span> {placeObject.state || '-'} | <span className="font-medium">Country:</span> {placeObject.country || '-'}</div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-sm text-slate-700 dark:text-slate-300 min-h-[40px]">
+                      {placeName ? (
+                        <div>
+                          <p>{placeName}</p>
+                          {placeObject && (
+                            <p className="mt-1 text-[11px] text-slate-500">Lat: {placeObject.latitude}, Long: {placeObject.longitude} {placeObject.state ? `| ${placeObject.state}` : ''} {placeObject.country ? `| ${placeObject.country}` : ''}</p>
+                          )}
+                        </div>
+                      ) : <span className="text-slate-400 italic">Not set</span>}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

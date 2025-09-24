@@ -3,7 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { toastBridge } from '../utils/toastBridge';
 import { authBridge } from '../utils/authBridge';
 
-const api = axios.create({ baseURL: '/api' });
+// Versioned API base path
+const api = axios.create({ baseURL: '/api/v1' });
 
 api.interceptors.request.use(cfg => {
   const token = localStorage.getItem('token');

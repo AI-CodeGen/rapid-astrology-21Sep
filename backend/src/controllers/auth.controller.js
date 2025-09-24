@@ -29,12 +29,15 @@ export async function verifyOTPController(req, res, next) {
     user.lastLoginAt = new Date();
     await user.save();
     const token = signToken({ uid: user._id, roles: user.roles });
-  res.json(buildSuccessPayload({ requestId: req.requestId, data: { token, user: serializeUser(user) }, message: 'otp_verified' }));
+    // Standardized nested envelope (no root-level token/user)
+    const base = buildSuccessPayload({ requestId: req.requestId, data: {}, message: 'otp_verified' });
+    res.json({ ...base, data: { token, user: serializeUser(user) } });
   } catch (e) { next(e); }
 }
 
 export async function me(req, res) {
-  res.json(buildSuccessPayload({ requestId: req.requestId, data: { user: req.user }, message: 'me' }));
+  const base = buildSuccessPayload({ requestId: req.requestId, data: {}, message: 'me' });
+  res.json({ ...base, data: { user: req.user } });
 }
 
 export async function updateProfileBasics(req, res, next) {
@@ -45,21 +48,56 @@ export async function updateProfileBasics(req, res, next) {
     if (theme !== undefined) req.dbUser.settings.theme = theme;
 
     if (userBasicDetails) {
-      // userBasicDetails: { dob, time: { hour, minute, second }, place: { name, ... } or legacy string }
-      const dest = req.dbUser.userBasicDetails || (req.dbUser.userBasicDetails = {});
-      if (userBasicDetails.dob !== undefined) dest.dob = userBasicDetails.dob ? new Date(userBasicDetails.dob) : undefined;
-      if (userBasicDetails.time) {
-        const { hour, minute, second } = userBasicDetails.time;
-        dest.time = { hour, minute, second: second ?? 0 };
+      // Merge strategy: take existing (if any), overlay provided fields, then set atomically.
+      const existing = req.dbUser.userBasicDetails ? req.dbUser.userBasicDetails.toObject() : {};
+      const merged = { ...existing };
+
+      if ('dob' in userBasicDetails) {
+        if (userBasicDetails.dob) merged.dob = new Date(userBasicDetails.dob);
+        else delete merged.dob; // allow clearing if needed (though required if subdoc exists fully)
       }
-      if (userBasicDetails.place !== undefined) {
-        // Accept either string (legacy) or object
-        dest.place = userBasicDetails.place;
+      if ('time' in userBasicDetails && userBasicDetails.time) {
+        const { hour, minute, second } = userBasicDetails.time;
+        merged.time = {
+          hour: hour !== undefined ? Number(hour) : existing?.time?.hour,
+          minute: minute !== undefined ? Number(minute) : existing?.time?.minute,
+          second: second !== undefined ? Number(second) : existing?.time?.second || 0,
+        };
+      }
+      if ('place' in userBasicDetails) {
+        // Accept string or structured object with coords/administrative fields.
+        merged.place = userBasicDetails.place;
+      }
+
+      const isEmptyBefore = !req.dbUser.userBasicDetails;
+      // If creating new basic details, ensure we have at least required core fields to avoid cryptic validation spam.
+      if (isEmptyBefore) {
+        const hasDob = merged.dob instanceof Date && !isNaN(merged.dob.valueOf());
+        const hasTime = merged.time && typeof merged.time.hour === 'number' && typeof merged.time.minute === 'number';
+        const hasPlace = merged.place && ((typeof merged.place === 'string' && merged.place.trim()) || merged.place.name);
+        if ((hasDob || hasTime || hasPlace) && !(hasDob && hasTime && hasPlace)) {
+          return res.status(400).json(buildErrorPayload({
+            error: 'VALIDATION_ERROR',
+            status: 400,
+            requestId: req.requestId,
+            message: 'Incomplete basic details: dob, time (hour & minute) and place are required to set basic details',
+            details: [
+              ...(hasDob ? [] : [{ field: 'userBasicDetails.dob', code: 'FIELD_REQUIRED', message: 'Date of birth required' }]),
+              ...(hasTime ? [] : [{ field: 'userBasicDetails.time', code: 'FIELD_REQUIRED', message: 'Hour & minute required' }]),
+              ...(hasPlace ? [] : [{ field: 'userBasicDetails.place', code: 'FIELD_REQUIRED', message: 'Place required' }])
+            ]
+          }));
+        }
+      }
+      if (Object.keys(merged).length > 0) {
+        req.dbUser.set('userBasicDetails', merged);
       }
     }
 
     await req.dbUser.save();
     if (name !== undefined) await invalidateNumerologyCache();
-    res.json(buildSuccessPayload({ requestId: req.requestId, data: { user: serializeUser(req.dbUser) }, message: 'profile_updated' }));
+    // Standardized envelope: place user inside data.user (OpenAPI spec compliant)
+    const base = buildSuccessPayload({ requestId: req.requestId, data: {}, message: 'profile_updated' });
+    res.json({ ...base, data: { user: serializeUser(req.dbUser) } });
   } catch (e) { next(e); }
 }
