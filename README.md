@@ -97,6 +97,17 @@ npm install
 npm run dev
 ```
 
+### Frontend Structure
+Key directories/components:
+
+- `src/components/ui/HeaderBar.jsx` – Global navigation shell (fixed header) used across all pages. Renders theme toggle, auth actions, dropdown nav groups, and the possessive profile label (e.g. `Adam's Profile`). This supersedes an earlier simpler `Header.jsx` which has been removed to avoid duplication.
+- `src/utils/formatProfileLabel.js` – Utility that generates the possessive profile label; covered by a unit test to ensure formatting is stable.
+- `src/context/AuthContext.jsx` – Persists `token` and `user` (bootstraps user from localStorage + `/auth/me` on reload).
+- `src/components/ProtectedRoute.jsx` – Guards private routes; redirects unauthenticated users to `/login` with a toast.
+- `src/services/*` – Thin API clients (axios instance auto-attaches JWT & request ID).
+
+If you add new navigation sections, extend `navGroups` in `src/components/navigationData.js`; `HeaderBar` will render them automatically.
+
 ## Running the Application (Local Dev Without Docker)
 This setup runs each service directly on your host machine (ideal for fast iteration with hot reload).
 
