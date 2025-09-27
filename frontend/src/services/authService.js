@@ -6,6 +6,7 @@ export async function requestOTP(phone) {
 }
 export async function verifyOTP(phone, otp) {
   const { data } = await api.post('/auth/otp/verify', { phone, otp });
+  // Returns full envelope: { success, message, data: { token, user } }
   return data;
 }
 export async function getMe() {

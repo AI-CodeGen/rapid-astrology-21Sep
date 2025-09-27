@@ -4,6 +4,7 @@ import HeaderBar from './components/ui/HeaderBar.jsx';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
+import ProtectedRoute from './components/ProtectedRoute';
 import NumerologyNameNumberPage from './pages/NumerologyNameNumberPage';
 import NumerologyDestinyMatchPage from './pages/NumerologyDestinyMatchPage';
 import OAuthCallback from './pages/OAuthCallback';
@@ -47,7 +48,7 @@ export default function App() {
         <Routes>
           <Route path='/' element={<HomePage />} />
           <Route path='/login' element={<LoginPage />} />
-          <Route path='/profile' element={<ProfilePage />} />
+          <Route path='/profile' element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path='/numerology/name-number' element={<NumerologyNameNumberPage />} />
           <Route path='/numerology/destiny-match' element={<NumerologyDestinyMatchPage />} />
           <Route path='/oauth/callback' element={<OAuthCallback />} />

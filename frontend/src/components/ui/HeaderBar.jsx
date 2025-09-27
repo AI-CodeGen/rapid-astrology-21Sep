@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import ThemeToggle from '../ThemeToggle.jsx';
 import { navGroups } from '../navigationData.js';
 import { Menu, X, LogOut } from 'lucide-react';
+import { formatProfileLabel } from '../../utils/formatProfileLabel.js';
 import clsx from 'clsx';
 
 // New standardized header bar (fixed)
@@ -12,6 +13,8 @@ export default function HeaderBar({ onOpenMobile, mobileOpen, onCloseMobile }) {
   const { user, logout, token } = useAuth();
   const toast = useToast();
   const logoutLock = useRef(false);
+
+  const profileLabel = useMemo(() => formatProfileLabel(user?.name), [user?.name]);
 
   return (
     <header className="fixed top-0 inset-x-0 z-40">
@@ -32,14 +35,16 @@ export default function HeaderBar({ onOpenMobile, mobileOpen, onCloseMobile }) {
             <ThemeToggle />
             {token ? (
               <>
+                {/** Derive possessive first-name label (e.g., Adam's Profile, James' Profile) */}
                 <NavLink
                   to="/profile"
                   className={({ isActive }) => clsx(
                     'px-3 py-1.5 rounded-md text-sm font-medium bg-brand-600/90 hover:bg-brand-600 text-white shadow focus:outline-none focus:ring-2 focus:ring-brand-500',
                     isActive && 'ring-2 ring-brand-500'
                   )}
+                  title={profileLabel}
                 >
-                  {user?.name || 'Profile'}
+                  {profileLabel}
                 </NavLink>
                 <button
                   onClick={() => { if (logoutLock.current) return; logoutLock.current = true; logout(); toast.success('Logout successful'); setTimeout(()=>{ logoutLock.current=false; }, 600); }}

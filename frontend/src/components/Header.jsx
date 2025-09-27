@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import DisciplineMenu from './DisciplineMenu';
@@ -6,6 +6,7 @@ import MobileMenu from './MobileMenu';
 import Container from './Container';
 import { Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { formatProfileLabel } from '../utils/formatProfileLabel.js';
 import { useToast } from '../context/ToastContext.jsx';
 
 export default function Header() {
@@ -14,6 +15,8 @@ export default function Header() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const logoutLock = useRef(false);
+  const profileLabel = useMemo(() => formatProfileLabel(user?.name), [user?.name]);
+
   return (
     <header className="sticky top-0 z-40 backdrop-blur-xl bg-slate-900/60 dark:bg-slate-950/50 border-b border-white/10">
       <Container className="h-16 flex items-center justify-between gap-4">
@@ -38,7 +41,7 @@ export default function Header() {
           </div>
           {token ? (
             <>
-              <Link to='/profile' className="btn-ghost max-w-[140px] truncate">{user?.name || 'Profile'}</Link>
+              <Link to='/profile' className="btn-ghost max-w-[160px] truncate" title={profileLabel}>{profileLabel}</Link>
               <button
                 onClick={() => {
                   if (logoutLock.current) return;

@@ -27,9 +27,10 @@ export default function LoginPage() {
       // Slight duplication with OAuthCallback page; kept here to match backend redirect to /login?token=
   fetch('/api/v1/auth/me', { headers: { Authorization: 'Bearer ' + oauthToken }})
         .then(r => r.json())
-        .then(data => {
-          if (data && data.user) {
-            login(oauthToken, data.user);
+        .then(env => {
+          const user = env?.data?.user;
+          if (user) {
+            login(oauthToken, user);
             navigate('/');
           }
         })
@@ -48,8 +49,12 @@ export default function LoginPage() {
   }
   async function handleVerify(e) {
     e.preventDefault();
-    const data = await verifyOTP(phone, otp);
-    login(data.token, data.user);
+      const env = await verifyOTP(phone, otp);
+      const token = env?.data?.token;
+      const user = env?.data?.user;
+      if (token && user) {
+        login(token, user);
+      }
     navigate('/');
   }
 

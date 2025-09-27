@@ -7,10 +7,11 @@ import { Input } from '../components/ui/Input.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Pencil, Calendar, Clock, MapPin } from 'lucide-react';
 // Removed static PLACE_SUGGESTIONS in favor of live backend powered autocomplete
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 export default function ProfilePage() {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
+  const navigate = useNavigate();
   const toast = useToast();
   const [profile, setProfile] = useState(null);
   const [name, setName] = useState('');
@@ -33,38 +34,48 @@ export default function ProfilePage() {
   const dobInputRef = useRef(null);
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
-  const env = await getMe();
-  const user = env.data.user;
-  setProfile(user);
-  setName(user.name || '');
-  setEmail(user.email || '');
-  const bd = user.userBasicDetails || {};
-      if (bd.dob) {
-        try { setDob(new Date(bd.dob).toISOString().slice(0,10)); } catch { /* noop */ }
-      }
-      if (bd.time) {
-        setTimeHour(bd.time.hour?.toString().padStart(2,'0') || '');
-        setTimeMinute(bd.time.minute?.toString().padStart(2,'0') || '');
-        setTimeSecond(bd.time.second?.toString().padStart(2,'0') || '');
-      }
-      if (bd.place) {
-        if (typeof bd.place === 'string') setPlaceName(bd.place);
-        else {
-          setPlaceName(bd.place.name || '');
-          setPlaceObject({
-            name: bd.place.name,
-            district: bd.place.district,
-            state: bd.place.state,
-            country: bd.place.country,
-            latitude: bd.place.latitude,
-            longitude: bd.place.longitude
-          });
+      try {
+        const env = await getMe();
+        if (cancelled) return;
+        const user = env.data.user;
+        setProfile(user);
+        setName(user.name || '');
+        setEmail(user.email || '');
+        const bd = user.userBasicDetails || {};
+        if (bd.dob) {
+          try { setDob(new Date(bd.dob).toISOString().slice(0,10)); } catch { /* noop */ }
         }
+        if (bd.time) {
+          setTimeHour(bd.time.hour?.toString().padStart(2,'0') || '');
+          setTimeMinute(bd.time.minute?.toString().padStart(2,'0') || '');
+          setTimeSecond(bd.time.second?.toString().padStart(2,'0') || '');
+        }
+        if (bd.place) {
+          if (typeof bd.place === 'string') setPlaceName(bd.place);
+          else {
+            setPlaceName(bd.place.name || '');
+            setPlaceObject({
+              name: bd.place.name,
+              district: bd.place.district,
+              state: bd.place.state,
+              country: bd.place.country,
+              latitude: bd.place.latitude,
+              longitude: bd.place.longitude
+            });
+          }
+        }
+      } catch (e) {
+        // Likely 401 -> force logout & redirect with toast
+        try { logout({ delay: 0, expired: true }); } catch { /* noop */ }
+        toast.info('Please login to view your profile.');
+        navigate('/login', { replace: true });
       }
     }
     if (token) load();
-  }, [token]);
+    return () => { cancelled = true; };
+  }, [token, logout, navigate, toast]);
 
   const dirty = useMemo(()=>{
     if (!profile) return false;
@@ -182,7 +193,9 @@ export default function ProfilePage() {
     }
   }
 
-  if (!token) return <Navigate to="/" replace />;
+  // Route is now wrapped in <ProtectedRoute/> which handles redirect to /login when no token.
+  // This guard is a safety fallback; use /login to match requirement.
+  if (!token) return <Navigate to="/login" replace />;
 
   return (
     <Box>

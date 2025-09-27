@@ -20,9 +20,11 @@ export default function OAuthCallback() {
     if (token) {
       localStorage.setItem('token', token);
       // Fetch profile
-      api.get('/auth/me', { headers: { Authorization: `Bearer ${token}` }})
+  api.get('/auth/me', { headers: { Authorization: `Bearer ${token}` }}) // baseURL already /api/v1
         .then(r => {
-          login(token, r.data.user);
+          const user = r.data?.data?.user;
+          if (!user) throw new Error('Missing user in response');
+          login(token, user);
           navigate('/profile');
         })
         .catch(() => {
