@@ -1,0 +1,101 @@
+{
+  "generatedAt": "2025-09-27T17:12:51.421Z",
+  "base": "http://localhost:5173",
+  "severityFilter": "serious",
+  "routes": [
+    {
+      "route": "/",
+      "violations": []
+    },
+    {
+      "route": "/login",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "target": [
+                ".bg-white > span"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.11 (foreground color: #f2f1fb, background color: #ffffff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                "input"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.15 (foreground color: #eeeff0, background color: #ffffff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                ".btn-primary"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.1 (foreground color: #ffffff, background color: #f3f2fd, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "route": "/profile",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "target": [
+                ".bg-white > span"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.04 (foreground color: #fafafe, background color: #ffffff, font size: 12.0pt (16px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                "input"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.05 (foreground color: #f9f9fa, background color: #ffffff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                ".btn-primary"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.04 (foreground color: #ffffff, background color: #fafafe, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "route": "/numerology/name-number",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "target": [
+                "input"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.15 (foreground color: #eeeff0, background color: #ffffff, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            },
+            {
+              "target": [
+                ".btn-primary"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.1 (foreground color: #ffffff, background color: #f3f2fd, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

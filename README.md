@@ -106,6 +106,43 @@ Key directories/components:
 - `src/components/ProtectedRoute.jsx` – Guards private routes; redirects unauthenticated users to `/login` with a toast.
 - `src/services/*` – Thin API clients (axios instance auto-attaches JWT & request ID).
 
+### Theming & Accessibility
+The UI supports:
+- Day (light) and Night (dark) themes (class-based dark mode: `<html class="dark">`).
+- Optional High Contrast mode: adds `high-contrast` class to `<html>` layered on top of current theme. This strengthens borders, link contrast, and reduces translucency for users needing additional clarity.
+
+State Management:
+- `ThemeContext` persists preferences in `localStorage` keys `pref:theme` and `pref:highContrast`.
+- `ThemeToggle` now renders two adjacent icon buttons: theme switch (sun/moon) and a contrast switch (contrast icon). The contrast control has `aria-pressed` for assistive tech.
+
+Utilities / CSS Tokens:
+- Light mode introduces CSS variables (e.g. `--color-bg-alt`, `--color-border-subtle`, brand tint blends using `color-mix`).
+- High contrast mode simply adds root overrides; no user data mutation required.
+- Additional helper classes: `.surface-tint{,-soft,-accent}`, `.fieldset`, `.section-divider`, `.emphasis-surface`, `.bg-alt`.
+
+#### Automated A11y Audit
+Run a lightweight accessibility & contrast audit (axe-core via Playwright) over core routes:
+```
+cd frontend
+npm install   # ensure dev deps present (playwright needs first install)
+npm run audit:a11y
+```
+Outputs JSON report(s) to `frontend/a11y-reports/` with filtered violations (default: impact >= serious). Environment vars:
+```
+A11Y_BASE=http://localhost:5173   # override base
+A11Y_SEVERITY=moderate            # change severity threshold
+HEADLESS=false                    # view browser during audit
+```
+CI suggestion: set `A11Y_SEVERITY=serious` so build fails only on serious/critical issues.
+
+Adding New Theme-Specific Styles:
+Prefer selectors scoped with `html:not(.dark)` for light and `.dark` for night. For high contrast combinations, prefix with `html.high-contrast:not(.dark)` (light high contrast) or `html.high-contrast.dark` (future dark high contrast if needed).
+
+Accessibility Notes:
+- Focus rings standardized (`focus-visible` ring offset & brand color) across variants.
+- Form labels and muted text in light theme were darkened to exceed WCAG 2.1 AA contrast (labels ~6.2:1 against background, body text > 7:1).
+- Ghost buttons in light mode now have visible borders & higher contrast hover states.
+
 If you add new navigation sections, extend `navGroups` in `src/components/navigationData.js`; `HeaderBar` will render them automatically.
 
 ## Running the Application (Local Dev Without Docker)

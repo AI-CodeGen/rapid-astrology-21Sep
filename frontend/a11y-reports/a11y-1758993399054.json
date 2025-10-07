@@ -1,0 +1,103 @@
+{
+  "generatedAt": "2025-09-27T17:16:39.054Z",
+  "base": "http://localhost:5173",
+  "severityFilter": "serious",
+  "routes": [
+    {
+      "route": "/",
+      "variant": "day",
+      "violations": []
+    },
+    {
+      "route": "/login",
+      "variant": "day",
+      "violations": []
+    },
+    {
+      "route": "/profile",
+      "variant": "day",
+      "violations": []
+    },
+    {
+      "route": "/numerology/name-number",
+      "variant": "day",
+      "violations": []
+    },
+    {
+      "route": "/",
+      "variant": "day-high-contrast",
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "target": [
+                ".btn-primary"
+              ],
+              "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.57 (foreground color: #3730a3, background color: #4f46e5, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "route": "/login",
+      "variant": "day-high-contrast",
+      "violations": []
+    },
+    {
+      "route": "/profile",
+      "variant": "day-high-contrast",
+      "violations": []
+    },
+    {
+      "route": "/numerology/name-number",
+      "variant": "day-high-contrast",
+      "violations": []
+    },
+    {
+      "route": "/",
+      "variant": "night",
+      "violations": []
+    },
+    {
+      "route": "/login",
+      "variant": "night",
+      "violations": []
+    },
+    {
+      "route": "/profile",
+      "variant": "night",
+      "violations": []
+    },
+    {
+      "route": "/numerology/name-number",
+      "variant": "night",
+      "violations": []
+    },
+    {
+      "route": "/",
+      "variant": "night-high-contrast",
+      "violations": []
+    },
+    {
+      "route": "/login",
+      "variant": "night-high-contrast",
+      "violations": []
+    },
+    {
+      "route": "/profile",
+      "variant": "night-high-contrast",
+      "violations": []
+    },
+    {
+      "route": "/numerology/name-number",
+      "variant": "night-high-contrast",
+      "violations": []
+    }
+  ]
+}

@@ -12,12 +12,104 @@ html, body, #root {
 }
 
 body {
+  /* Night (default) theme */
   @apply antialiased bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-800 text-slate-100 relative overflow-x-hidden;
 }
 
-.light body, body.theme-day {
-  @apply bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-800;
+/* Light (day) theme improvements: higher contrast neutrals, reduce washed gradients */
+html:not(.dark) body {
+  /* Elevated contrast for base text & slightly simplified gradient */
+  @apply bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900;
+  background-attachment: fixed;
 }
+/* (Card override moved lower after .card definition to avoid being clobbered) */
+
+/* Introduce design tokens (light) as CSS variables for future refinement */
+html:not(.dark) :root {
+  --color-bg-base: #ffffff;
+  --color-bg-alt: #f1f5f9; /* slate-100/200 hybrid */
+  --color-border-subtle: #cbd5e1; /* slate-300 */
+  --color-border-strong: #94a3b8; /* slate-400 */
+  --color-text-primary: #0f172a; /* slate-900 */
+  --color-text-secondary: #334155; /* slate-700 */
+  --color-text-muted: #475569; /* slate-600 */
+  --color-focus-ring: #6366f1; /* brand-ish (indigo-500/600) */
+  --color-surface-elevated: #ffffff;
+  --color-surface-alt: #f8fafc; /* slate-50 */
+  /* Brand tint blends */
+  --tint-brand-soft: color-mix(in srgb, #6366f1 8%, white);
+  --tint-brand-softer: color-mix(in srgb, #6366f1 4%, white);
+  --tint-brand-accent: color-mix(in srgb, #6366f1 14%, white);
+}
+
+/* Headings & emphasis in light mode: slightly stronger for readability */
+html:not(.dark) h1, html:not(.dark) h2, html:not(.dark) h3 { @apply text-slate-900; }
+
+/* Primary button adaptive focus ring offset for light */
+html:not(.dark) .btn-primary { @apply focus-visible:ring-offset-slate-100; }
+
+/* Ghost button variant for light mode (previous style was low contrast) */
+/* Ghost button: add border + clearer hover states for WCAG contrast */
+html:not(.dark) .btn-ghost { @apply text-slate-800 border border-slate-400/80 bg-white/60 hover:bg-slate-100 active:bg-slate-200 focus-visible:ring-brand-500 focus-visible:ring-2; }
+/* Emphasized ghost when paired with primary actions */
+html:not(.dark) .btn-ghost[data-variant="emphasis"] { @apply text-brand-700 border-brand-500/40 hover:bg-brand-50 active:bg-brand-100; }
+
+/* Inputs in light theme: ensure adequate border contrast */
+html:not(.dark) input,
+html:not(.dark) select,
+html:not(.dark) textarea { @apply bg-white border-slate-400 text-slate-900 placeholder-slate-500 focus:border-brand-500 focus:ring-brand-500/30; }
+
+
+/* Muted text in light mode slightly darker for readability */
+html:not(.dark) .text-muted { @apply text-slate-600; }
+/* Form labels / subtle uppercase labels: ensure stronger contrast in light */
+html:not(.dark) label { @apply text-slate-800 font-medium tracking-normal; }
+/* Paragraph/body copy refinement for readability */
+html:not(.dark) p { @apply text-slate-800 leading-relaxed; }
+/* Alt background utility for zebra sections */
+html:not(.dark) .bg-alt { background-color: var(--color-bg-alt); }
+/* Subtle horizontal divider */
+html:not(.dark) .section-divider { @apply border-t border-slate-200; }
+/* Strengthen primary button text contrast on hover (keep accessible states) */
+html:not(.dark) .btn-primary { @apply text-white hover:bg-brand-600 active:bg-brand-700; }
+
+/* Links in light mode: use brand color with hover contrast */
+html:not(.dark) a { @apply text-brand-700 hover:text-brand-800 underline decoration-brand-400/50 hover:decoration-brand-500 decoration-2; }
+/* High contrast optional mode: add 'high-contrast' class to <html> */
+html.high-contrast:not(.dark) body { @apply bg-white text-slate-900; }
+html.high-contrast:not(.dark) .card { @apply border-slate-400 shadow; }
+html.high-contrast:not(.dark) .btn-ghost { @apply border-slate-500 text-slate-900; }
+html.high-contrast:not(.dark) a { @apply text-brand-800 hover:text-brand-700; }
+html.high-contrast:not(.dark) .text-muted { @apply text-slate-700; }
+html.high-contrast:not(.dark) label { @apply text-slate-800; }
+/* Ensure primary buttons retain sufficient contrast in high contrast light mode */
+html.high-contrast:not(.dark) .btn-primary { @apply text-white bg-brand-600 hover:bg-brand-700 active:bg-brand-800; }
+
+/* Brand tinted surfaces */
+html:not(.dark) .surface-tint-soft { background: var(--tint-brand-softer); }
+html:not(.dark) .surface-tint { background: var(--tint-brand-soft); }
+html:not(.dark) .surface-tint-accent { background: var(--tint-brand-accent); }
+
+/* Utility: elevated emphasis background strip */
+html:not(.dark) .emphasis-surface { @apply bg-gradient-to-r from-brand-50 via-white to-brand-50 border border-brand-100; }
+
+/* Utility: subtle inset fieldset styling */
+html:not(.dark) .fieldset { @apply rounded-lg border border-slate-300 bg-white/90 p-4; }
+html:not(.dark) .fieldset legend { @apply px-2 text-xs font-semibold tracking-wide text-slate-700; }
+
+/* Glass panel utility redefined for clearer light contrast */
+.glass { @apply backdrop-blur-md; }
+/* Light default: opaque-ish elevated card */
+html:not(.dark) .glass { @apply bg-white border border-slate-300 shadow-md; }
+/* Dark variant keeps atmospheric translucency */
+.dark .glass { @apply bg-slate-800/40 border border-white/10 dark:border-slate-700/60 shadow-lg shadow-black/40; }
+
+/* Selection color for better visibility in light mode */
+html:not(.dark) ::selection { @apply bg-brand-200 text-slate-900; }
+html:not(.dark) ::-moz-selection { @apply bg-brand-200 text-slate-900; }
+
+/* Focus ring normalization when dark class absent */
+html:not(.dark) :focus-visible { @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white; }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 10px; }
@@ -25,10 +117,10 @@ body {
 ::-webkit-scrollbar-thumb { @apply bg-slate-700/50 rounded-full border border-slate-600/40; }
 ::-webkit-scrollbar-thumb:hover { @apply bg-slate-600/70; }
 
-/* Glass panel utility */
-.glass {
-  @apply bg-white/10 dark:bg-slate-800/40 backdrop-blur-md border border-white/10 dark:border-slate-700/60 shadow-lg shadow-black/40;
-}
+/* Card component */
+.card { @apply glass rounded-xl p-6 animate-scale-in; }
+/* Now safely override in light AFTER .card definition (improves contrast) */
+html:not(.dark) .card { @apply bg-white border-slate-300 text-slate-900 shadow-md; }
 
 .spotlight-overlay::before {
   content: '';
@@ -46,9 +138,10 @@ body {
 }
 
 .btn-primary { @apply inline-flex items-center gap-2 rounded-md bg-brand-600 hover:bg-brand-500 active:bg-brand-700 text-white px-4 py-2 text-sm font-medium shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 transition; }
+/* Ghost variant defaults to dark mode styling; light override above */
 .btn-ghost { @apply inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-slate-100 hover:bg-white/15 active:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 transition; }
 
-.card { @apply glass rounded-xl p-6 animate-scale-in; }
+/* (Card base moved above; duplicate removed) */
 
 .fade-in { @apply animate-fade-in; }
 .scale-in { @apply animate-scale-in; }

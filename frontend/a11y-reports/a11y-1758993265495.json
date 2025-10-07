@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2025-09-27T17:14:25.495Z",
+  "base": "http://localhost:5173",
+  "severityFilter": "serious",
+  "routes": [
+    {
+      "route": "/",
+      "violations": []
+    },
+    {
+      "route": "/login",
+      "violations": []
+    },
+    {
+      "route": "/profile",
+      "violations": []
+    },
+    {
+      "route": "/numerology/name-number",
+      "violations": []
+    }
+  ]
+}

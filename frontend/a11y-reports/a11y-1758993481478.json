@@ -1,0 +1,87 @@
+{
+  "generatedAt": "2025-09-27T17:18:01.478Z",
+  "base": "http://localhost:5173",
+  "severityFilter": "serious",
+  "routes": [
+    {
+      "route": "/",
+      "variant": "day",
+      "violations": []
+    },
+    {
+      "route": "/login",
+      "variant": "day",
+      "violations": []
+    },
+    {
+      "route": "/profile",
+      "variant": "day",
+      "violations": []
+    },
+    {
+      "route": "/numerology/name-number",
+      "variant": "day",
+      "violations": []
+    },
+    {
+      "route": "/",
+      "variant": "day-high-contrast",
+      "violations": []
+    },
+    {
+      "route": "/login",
+      "variant": "day-high-contrast",
+      "violations": []
+    },
+    {
+      "route": "/profile",
+      "variant": "day-high-contrast",
+      "violations": []
+    },
+    {
+      "route": "/numerology/name-number",
+      "variant": "day-high-contrast",
+      "violations": []
+    },
+    {
+      "route": "/",
+      "variant": "night",
+      "violations": []
+    },
+    {
+      "route": "/login",
+      "variant": "night",
+      "violations": []
+    },
+    {
+      "route": "/profile",
+      "variant": "night",
+      "violations": []
+    },
+    {
+      "route": "/numerology/name-number",
+      "variant": "night",
+      "violations": []
+    },
+    {
+      "route": "/",
+      "variant": "night-high-contrast",
+      "violations": []
+    },
+    {
+      "route": "/login",
+      "variant": "night-high-contrast",
+      "violations": []
+    },
+    {
+      "route": "/profile",
+      "variant": "night-high-contrast",
+      "violations": []
+    },
+    {
+      "route": "/numerology/name-number",
+      "variant": "night-high-contrast",
+      "violations": []
+    }
+  ]
+}
